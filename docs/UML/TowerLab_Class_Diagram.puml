@@ -1,0 +1,206 @@
+@startuml
+title TowerLab - Core Game Model
+
+' ---------------- VISUAL CONFIGURATION ----------------
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam nodesep 45
+skinparam ranksep 55
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+
+hide empty members
+
+top to bottom direction
+
+' ======================================================
+'                    TOWER SYSTEM
+' ======================================================
+
+package "Tower System" {
+
+    abstract class Tower {
+        - id: String
+        - position: Position
+        - damage: double
+        - attackRange: double
+        - attackSpeed: double
+        - purchaseCost: int
+        - upgradeLevel: int
+        - attackCooldown: double
+        - targetingStrategy: TargetingStrategy
+        + attack(enemy: Enemy): void
+        + canAttack(enemy: Enemy): boolean
+        + upgrade(): boolean
+        + calculateDamage(enemy: Enemy): double
+        + selectTarget(enemies: List<Enemy>): Enemy
+        + setTargetingStrategy(strategy: TargetingStrategy): void
+    }
+
+    class CannonTower {
+        + attack(enemy: Enemy): void
+        + applyAreaDamage(enemies: List<Enemy>): void
+    }
+
+    class SniperTower {
+        + attack(enemy: Enemy): void
+    }
+
+    class FrostTower {
+        + attack(enemy: Enemy): void
+        + applySlow(enemy: Enemy): void
+    }
+
+    class RapidTower {
+        + attack(enemy: Enemy): void
+    }
+
+    Tower <|-- CannonTower
+    Tower <|-- SniperTower
+    Tower <|-- FrostTower
+    Tower <|-- RapidTower
+}
+
+' ======================================================
+'                    ENEMY SYSTEM
+' ======================================================
+
+package "Enemy System" {
+
+    abstract class Enemy {
+        - id: String
+        - position: Position
+        - health: double
+        - maxHealth: double
+        - movementSpeed: double
+        - armour: double
+        - reward: int
+        - baseDamage: int
+        - statusEffects: List<StatusEffect>
+        + move(deltaTime: double): void
+        + takeDamage(amount: double): void
+        + applyStatusEffect(effect: StatusEffect): void
+        + isAlive(): boolean
+        + reachDestination(): void
+    }
+
+    class FastEnemy {
+        + move(deltaTime: double): void
+    }
+
+    class ArmoredEnemy {
+        + takeDamage(amount: double): void
+    }
+
+    class FlyingEnemy {
+        + move(deltaTime: double): void
+    }
+
+    class BossEnemy {
+        + takeDamage(amount: double): void
+        + activateSpecialAbility(): void
+    }
+
+    class StatusEffect {
+        - effectType: String
+        - magnitude: double
+        - duration: double
+        + apply(enemy: Enemy): void
+        + update(deltaTime: double): void
+        + isExpired(): boolean
+    }
+
+    Enemy <|-- FastEnemy
+    Enemy <|-- ArmoredEnemy
+    Enemy <|-- FlyingEnemy
+    Enemy <|-- BossEnemy
+
+    Enemy "1" *-- "0..*" StatusEffect : affected by
+}
+
+' ======================================================
+'                 GAME ENVIRONMENT
+' ======================================================
+
+package "Game Environment" {
+
+    class Position {
+        - x: int
+        - y: int
+        + distanceTo(other: Position): double
+    }
+
+    class GameMap {
+        - width: int
+        - height: int
+        - startPosition: Position
+        - destination: Position
+        + isBuildable(position: Position): boolean
+        + isValidPosition(position: Position): boolean
+        + findPath(start: Position, end: Position): List<Position>
+    }
+
+    class Wave {
+        - waveNumber: int
+        - spawnInterval: double
+        - completed: boolean
+        + spawnNextEnemy(): Enemy
+        + isCompleted(): boolean
+    }
+
+    class GameConfiguration {
+        - initialCoins: int
+        - initialLives: int
+        - totalWaves: int
+        - difficultyLevel: String
+    }
+
+    class GameSession {
+        - sessionId: String
+        - playerCoins: int
+        - playerLives: int
+        - currentWaveNumber: int
+        + placeTower(tower: Tower): boolean
+        + upgradeTower(tower: Tower): boolean
+        + sellTower(tower: Tower): boolean
+        + startNextWave(): void
+        + getCurrentStatus(): String
+    }
+
+    class GameResult {
+        - won: boolean
+        - wavesCompleted: int
+        - enemiesKilled: int
+        - enemiesLeaked: int
+        - totalDamage: double
+        - remainingLives: int
+        - duration: double
+    }
+
+    ' Game ownership and relationships
+
+    GameSession "1" *-- "1" GameMap : owns
+    GameSession "1" *-- "1..*" Wave : manages
+    GameSession "1" o-- "0..*" Tower : placed towers
+    GameSession "1" o-- "0..*" Enemy : active enemies
+
+    GameSession --> "1" GameConfiguration : initialized from
+    GameSession --> "0..1" GameResult : produces
+
+    GameMap --> "2" Position : start and destination
+}
+
+' ======================================================
+'                   CROSS-PACKAGE LINKS
+' ======================================================
+
+Tower --> Position : located at
+Enemy --> Position : located at
+
+Tower ..> Enemy : attacks
+Wave ..> Enemy : creates
+@enduml
