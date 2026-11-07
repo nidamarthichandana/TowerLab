@@ -1,0 +1,219 @@
+@startuml TowerLab_Game_Engine
+
+title TowerLab - Game Engine Architecture
+
+' ================= VISUAL CONFIGURATION =================
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam nodesep 45
+skinparam ranksep 50
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+
+hide empty members
+top to bottom direction
+
+' ========================================================
+'                 GAME EXECUTION ENGINE
+' ========================================================
+
+package "Game Execution Engine" {
+
+    class GameEngine {
+        - session: GameSession
+        - waveManager: WaveManager
+        - combatResolver: CombatResolver
+        - stateManager: GameStateManager
+        - eventPublisher: GameEventPublisher
+        - commandInvoker: CommandInvoker
+        + initialize(config: GameConfiguration): void
+        + startGame(): void
+        + tick(deltaTime: double): void
+        + pauseGame(): void
+        + resumeGame(): void
+        + executeCommand(command: GameCommand): boolean
+        + checkGameCompletion(): void
+        + getGameResult(): GameResult
+    }
+
+    class WaveManager {
+        - currentWave: Wave
+        - spawnTimer: double
+        + startWave(): void
+        + update(deltaTime: double): void
+        + spawnEnemies(): void
+        + isWaveCompleted(): boolean
+        + moveToNextWave(): void
+    }
+
+    class CombatResolver {
+        + resolveAttack(tower: Tower, enemy: Enemy): void
+        + calculateDamage(tower: Tower, enemy: Enemy): double
+        + applyAreaDamage(tower: Tower, enemies: List<Enemy>): void
+        + processStatusEffects(enemy: Enemy, deltaTime: double): void
+    }
+
+    class GameStateManager {
+        - currentState: GameState
+        + setState(state: GameState): void
+        + getState(): GameState
+        + canPerformAction(): boolean
+        + isGameActive(): boolean
+    }
+
+    class GameSession
+    class GameConfiguration
+    class GameResult
+    class Wave
+    class Tower
+    class Enemy
+
+    GameEngine *-- GameSession : manages
+    GameEngine *-- WaveManager
+    GameEngine *-- CombatResolver
+    GameEngine *-- GameStateManager
+    GameEngine *-- CommandInvoker
+
+    GameEngine --> GameEventPublisher : publishes events
+
+    GameEngine ..> GameConfiguration : initializes with
+    GameEngine ..> GameResult : produces
+
+    GameSession o-- "0..*" Tower : contains
+    GameSession o-- "0..*" Enemy : tracks
+
+    WaveManager --> Wave : manages
+    WaveManager ..> Enemy : spawns
+
+    CombatResolver ..> Tower : processes attacks
+    CombatResolver ..> Enemy : applies damage
+}
+
+' ========================================================
+'                    STATE PATTERN
+' ========================================================
+
+package "State Pattern" {
+
+    interface GameState {
+        + start(): void
+        + pause(): void
+        + resume(): void
+        + end(): void
+        + canPerformAction(): boolean
+    }
+
+    class ReadyState
+    class PlayingState
+    class PausedState
+    class WonState
+    class LostState
+
+    GameState <|.. ReadyState
+    GameState <|.. PlayingState
+    GameState <|.. PausedState
+    GameState <|.. WonState
+    GameState <|.. LostState
+
+    GameStateManager --> GameState : maintains current state
+}
+
+' ========================================================
+'                   OBSERVER PATTERN
+' ========================================================
+
+package "Observer Pattern" {
+
+    interface GameEventListener {
+        + onGameEvent(event: GameEvent): void
+    }
+
+    class GameEventPublisher {
+        - listeners: List<GameEventListener>
+        + subscribe(listener: GameEventListener): void
+        + unsubscribe(listener: GameEventListener): void
+        + publish(event: GameEvent): void
+    }
+
+    abstract class GameEvent {
+        - timestamp: long
+        + getEventType(): String
+    }
+
+    class EnemyKilledEvent
+    class EnemyReachedDestinationEvent
+    class WaveCompletedEvent
+    class GameOverEvent
+
+    GameEvent <|-- EnemyKilledEvent
+    GameEvent <|-- EnemyReachedDestinationEvent
+    GameEvent <|-- WaveCompletedEvent
+    GameEvent <|-- GameOverEvent
+
+    GameEventPublisher o-- "0..*" GameEventListener : notifies
+    GameEventListener ..> GameEvent : receives
+    GameEventPublisher ..> GameEvent : publishes
+}
+
+' ========================================================
+'                    COMMAND PATTERN
+' ========================================================
+
+package "Command Pattern" {
+
+    interface GameCommand {
+        + execute(): boolean
+        + undo(): void
+    }
+
+    class PlaceTowerCommand {
+        - tower: Tower
+        - position: Position
+        + execute(): boolean
+        + undo(): void
+    }
+
+    class UpgradeTowerCommand {
+        - tower: Tower
+        + execute(): boolean
+        + undo(): void
+    }
+
+    class SellTowerCommand {
+        - tower: Tower
+        + execute(): boolean
+        + undo(): void
+    }
+
+    class CommandInvoker {
+        - history: Stack<GameCommand>
+        + executeCommand(command: GameCommand): boolean
+        + undoLastCommand(): void
+    }
+
+    GameCommand <|.. PlaceTowerCommand
+    GameCommand <|.. UpgradeTowerCommand
+    GameCommand <|.. SellTowerCommand
+
+    CommandInvoker --> "0..*" GameCommand : executes and records
+}
+
+' ========================================================
+'                  COMPONENT INTEGRATION
+' ========================================================
+
+GameEngine --> GameStateManager : checks permissions
+GameEngine --> CommandInvoker : delegates actions
+
+CommandInvoker ..> GameSession : modifies session
+
+WaveManager ..> GameEventPublisher : publishes wave events
+CombatResolver ..> GameEventPublisher : publishes combat events
+
+GameEngine ..> GameEventPublisher : publishes lifecycle events
+
+@enduml
