@@ -1,0 +1,177 @@
+@startuml TowerLab_Simulation_Analytics
+
+title TowerLab - Simulation and Analytics Architecture
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam nodesep 45
+skinparam ranksep 50
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+
+hide empty members
+top to bottom direction
+
+' =====================================================
+'              SIMULATION ORCHESTRATION
+' =====================================================
+
+package "Simulation Engine" {
+
+    class SimulationEngine {
+        - runner: SimulationRunner
+        - seedGenerator: RandomSeedGenerator
+        + runSimulation(config: GameConfiguration, runs: int): SimulationBatchResult
+        + cancelSimulation(batchId: String): void
+        + getSimulationStatus(batchId: String): String
+    }
+
+    class SimulationRunner {
+        - gameEngine: GameEngine
+        + executeRun(config: GameConfiguration, seed: long): SimulationResult
+    }
+
+    class RandomSeedGenerator {
+        - baseSeed: long
+        + generateSeed(runIndex: int): long
+    }
+
+    class SimulationRunContext {
+        - runId: String
+        - randomSeed: long
+        - startTime: long
+        + initialize(config: GameConfiguration): void
+    }
+
+    class GameEngine
+    class GameConfiguration
+
+    SimulationEngine *-- SimulationRunner
+    SimulationEngine *-- RandomSeedGenerator
+
+    SimulationEngine ..> GameConfiguration : receives
+    SimulationRunner --> GameEngine : reuses
+    SimulationRunner ..> SimulationRunContext : creates
+    SimulationRunContext --> GameConfiguration
+}
+
+' =====================================================
+'                SIMULATION RESULTS
+' =====================================================
+
+package "Result Management" {
+
+    class SimulationResult {
+        - runId: String
+        - randomSeed: long
+        - won: boolean
+        - enemiesKilled: int
+        - enemiesLeaked: int
+        - totalDamage: double
+        - remainingLives: int
+        - duration: double
+    }
+
+    class SimulationBatchResult {
+        - batchId: String
+        - totalRuns: int
+        - completedRuns: int
+        - winRate: double
+        - averageDamage: double
+        - averageEnemyLeakage: double
+        - averageDuration: double
+        + calculateAggregates(): void
+    }
+
+    SimulationBatchResult *-- "0..*" SimulationResult : contains
+    SimulationRunner ..> SimulationResult : produces
+    SimulationEngine ..> SimulationBatchResult : produces
+}
+
+' =====================================================
+'                 ANALYTICS ENGINE
+' =====================================================
+
+package "Analytics Engine" {
+
+    class AnalyticsEngine {
+        + analyze(batch: SimulationBatchResult): AnalyticsReport
+        + calculateWinRate(results: List<SimulationResult>): double
+        + calculateAverageDamage(results: List<SimulationResult>): double
+        + calculateLeakage(results: List<SimulationResult>): double
+    }
+
+    class AnalyticsReport {
+        - reportId: String
+        - generatedAt: long
+        - metrics: Map
+        + getMetrics(): Map
+    }
+
+    class TowerPerformanceAnalyzer {
+        + calculateDamageContribution(): Map
+        + calculateDamagePerCost(): Map
+        + calculateTowerUtilization(): Map
+        + rankTowers(): List
+    }
+
+    class BalanceAnalyzer {
+        + analyzeWinRate(): void
+        + identifyOverpoweredTowers(): void
+        + identifyUnderperformingTowers(): void
+        + generateRecommendations(): List
+    }
+
+    class BalanceRecommendation {
+        - componentName: String
+        - severity: String
+        - explanation: String
+        - suggestedAdjustment: String
+    }
+
+    AnalyticsEngine --> AnalyticsReport : generates
+    AnalyticsEngine *-- TowerPerformanceAnalyzer
+    AnalyticsEngine *-- BalanceAnalyzer
+
+    BalanceAnalyzer --> "0..*" BalanceRecommendation : generates
+    AnalyticsReport o-- "0..*" BalanceRecommendation : includes
+
+    AnalyticsEngine ..> SimulationBatchResult : analyzes
+}
+
+' =====================================================
+'              CONFIGURATION COMPARISON
+' =====================================================
+
+package "Configuration Comparison" {
+
+    class ConfigurationComparator {
+        + compare(configA: GameConfiguration, configB: GameConfiguration): ComparisonReport
+        + compareWinRates(): void
+        + compareTowerEfficiency(): void
+    }
+
+    class ComparisonReport {
+        - reportId: String
+        - configurationAId: String
+        - configurationBId: String
+        - metricDifferences: Map
+        + getSummary(): String
+    }
+
+    ConfigurationComparator ..> GameConfiguration
+    ConfigurationComparator ..> SimulationBatchResult
+    ConfigurationComparator --> ComparisonReport : produces
+}
+
+' =====================================================
+'                  MAIN RELATIONSHIPS
+' =====================================================
+
+SimulationEngine ..> AnalyticsEngine : results analyzed by
+SimulationBatchResult ..> AnalyticsEngine : input data
+
+@enduml
