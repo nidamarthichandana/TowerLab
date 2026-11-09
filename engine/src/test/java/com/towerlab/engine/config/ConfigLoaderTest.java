@@ -1,0 +1,379 @@
+package com.towerlab.engine.config;
+
+import com.towerlab.engine.exception.InvalidConfigException;
+import com.towerlab.engine.model.Position;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class ConfigLoaderTest {
+
+    private ConfigLoader loader;
+
+    @BeforeEach
+    void setUp() {
+        loader = new ConfigLoader();
+    }
+
+    @Test
+    @DisplayName("Load valid configuration from classpath resources and verify GAME_RULES.md values")
+    void testLoadValidConfigurationFromClasspath() {
+        GameConfig config = loader.loadFromClasspath("");
+
+        assertNotNull(config, "GameConfig must not be null");
+        assertNotNull(config.towers(), "Towers map must not be null");
+        assertNotNull(config.enemies(), "Enemies map must not be null");
+        assertNotNull(config.level(), "LevelConfig must not be null");
+
+        // Verify MVP towers
+        assertTrue(config.towers().containsKey("Cannon"));
+        assertTrue(config.towers().containsKey("Sniper"));
+        assertTrue(config.towers().containsKey("Frost"));
+        TowerConfig cannon = config.towers().get("Cannon");
+        assertEquals("MVP", cannon.tier());
+        assertTrue(cannon.isMvp());
+        assertEquals(60, cannon.cost());
+        assertEquals(2.5, cannon.range());
+        assertEquals(12.0, cannon.damage());
+        assertEquals(12, cannon.cooldown());
+        assertEquals(40, cannon.upgradeCost());
+
+        TowerConfig frost = config.towers().get("Frost");
+        assertEquals(35, frost.upgradeCost(), "Frost upgrade cost must be 35 per GR-25");
+
+        // Verify Stretch towers
+        assertTrue(config.towers().containsKey("Rapid"));
+        TowerConfig rapid = config.towers().get("Rapid");
+        assertEquals("Stretch", rapid.tier());
+        assertTrue(rapid.isStretch());
+
+        // Verify MVP enemies
+        assertTrue(config.enemies().containsKey("Basic"));
+        assertTrue(config.enemies().containsKey("Fast"));
+        assertTrue(config.enemies().containsKey("Armored"));
+        EnemyConfig basic = config.enemies().get("Basic");
+        assertEquals("MVP", basic.tier());
+        assertTrue(basic.isMvp());
+        assertEquals(40.0, basic.health());
+        assertEquals(0.05, basic.speed());
+        assertEquals(8, basic.reward());
+        assertEquals(1, basic.baseDamage());
+
+        // Verify Stretch enemies
+        assertTrue(config.enemies().containsKey("Flying"));
+        assertTrue(config.enemies().containsKey("Boss"));
+        assertTrue(config.enemies().get("Flying").isStretch());
+        assertTrue(config.enemies().get("Boss").isStretch());
+
+        // Verify MVP level contains only MVP tower types
+        assertEquals("Level 1", config.level().name());
+        assertEquals(12, config.level().width());
+        assertEquals(8, config.level().height());
+        assertEquals(List.of("Cannon", "Sniper", "Frost"), config.level().allowedTowers());
+        for (String towerType : config.level().allowedTowers()) {
+            assertTrue(config.towers().get(towerType).isMvp(), "Level 1 must only allow MVP towers");
+        }
+
+        // Verify waypoints and waves match GR-8 & GR-28
+        assertEquals(6, config.level().waypoints().size());
+        assertEquals(5, config.level().waves().size());
+    }
+
+    @Test
+    @DisplayName("Load valid configuration from a directory with temporary test files")
+    void testLoadValidConfigurationFromDirectory(@TempDir Path tempDir) throws IOException {
+        String towersJson = """
+                [
+                  {"type": "Cannon", "tier": "MVP", "cost": 60, "range": 2.5, "damage": 12.0, "cooldown": 12}
+                ]
+                """;
+        String enemiesJson = """
+                [
+                  {"type": "Basic", "tier": "MVP", "health": 40.0, "speed": 0.05, "reward": 8, "baseDamage": 1}
+                ]
+                """;
+        String levelJson = """
+                {
+                  "name": "Test Level",
+                  "width": 10,
+                  "height": 10,
+                  "waypoints": [
+                    {"x": 0, "y": 2},
+                    {"x": 5, "y": 2},
+                    {"x": 5, "y": 8}
+                  ],
+                  "allowedTowers": ["Cannon"],
+                  "waves": [
+                    {
+                      "waveNumber": 1,
+                      "spawnGroups": [
+                        {"enemyType": "Basic", "count": 5, "interval": 10, "startDelay": 0}
+                      ]
+                    }
+                  ]
+                }
+                """;
+
+        Files.writeString(tempDir.resolve("towers.json"), towersJson);
+        Files.writeString(tempDir.resolve("enemies.json"), enemiesJson);
+        Files.writeString(tempDir.resolve("level1.json"), levelJson);
+
+        GameConfig config = loader.loadFromDirectory(tempDir);
+        assertNotNull(config);
+        assertEquals(1, config.towers().size());
+        assertEquals(1, config.enemies().size());
+        assertEquals("Test Level", config.level().name());
+    }
+
+    @Test
+    @DisplayName("Validation fails when tower statistics are non-positive")
+    void testInvalidNonPositiveTowerStatistics() {
+        TowerConfig negativeCost = new TowerConfig("BadCost", -10, 2.5, 10.0, 15);
+        InvalidConfigException ex1 = assertThrows(InvalidConfigException.class, () ->
+                loader.validateTowers(Map.of("BadCost", negativeCost)));
+        assertTrue(ex1.getMessage().contains("positive cost"));
+
+        TowerConfig zeroRange = new TowerConfig("ZeroRange", 50, 0.0, 10.0, 15);
+        InvalidConfigException ex2 = assertThrows(InvalidConfigException.class, () ->
+                loader.validateTowers(Map.of("ZeroRange", zeroRange)));
+        assertTrue(ex2.getMessage().contains("positive range"));
+
+        TowerConfig zeroDamage = new TowerConfig("ZeroDamage", 50, 2.5, 0.0, 15);
+        InvalidConfigException ex3 = assertThrows(InvalidConfigException.class, () ->
+                loader.validateTowers(Map.of("ZeroDamage", zeroDamage)));
+        assertTrue(ex3.getMessage().contains("positive damage"));
+
+        TowerConfig negativeCooldown = new TowerConfig("NegativeCooldown", 50, 2.5, 10.0, -5);
+        InvalidConfigException ex4 = assertThrows(InvalidConfigException.class, () ->
+                loader.validateTowers(Map.of("NegativeCooldown", negativeCooldown)));
+        assertTrue(ex4.getMessage().contains("positive cooldown"));
+    }
+
+    @Test
+    @DisplayName("Validation fails when enemy statistics are non-positive")
+    void testInvalidNonPositiveEnemyStatistics() {
+        EnemyConfig zeroHealth = new EnemyConfig("ZeroHealth", 0.0, 0.05, 10, 1);
+        InvalidConfigException ex1 = assertThrows(InvalidConfigException.class, () ->
+                loader.validateEnemies(Map.of("ZeroHealth", zeroHealth)));
+        assertTrue(ex1.getMessage().contains("positive health"));
+
+        EnemyConfig negativeSpeed = new EnemyConfig("NegativeSpeed", 50.0, -0.1, 10, 1);
+        InvalidConfigException ex2 = assertThrows(InvalidConfigException.class, () ->
+                loader.validateEnemies(Map.of("NegativeSpeed", negativeSpeed)));
+        assertTrue(ex2.getMessage().contains("positive speed"));
+
+        EnemyConfig zeroReward = new EnemyConfig("ZeroReward", 50.0, 0.05, 0, 1);
+        InvalidConfigException ex3 = assertThrows(InvalidConfigException.class, () ->
+                loader.validateEnemies(Map.of("ZeroReward", zeroReward)));
+        assertTrue(ex3.getMessage().contains("positive reward"));
+
+        EnemyConfig zeroDamage = new EnemyConfig("ZeroDamage", 50.0, 0.05, 10, 0);
+        InvalidConfigException ex4 = assertThrows(InvalidConfigException.class, () ->
+                loader.validateEnemies(Map.of("ZeroDamage", zeroDamage)));
+        assertTrue(ex4.getMessage().contains("positive base damage"));
+    }
+
+    @Test
+    @DisplayName("Validation fails when armour or evasion values are outside [0.0, 1.0]")
+    void testInvalidArmourAndEvasion() {
+        EnemyConfig negativeArmour = new EnemyConfig("BadArmour", "MVP", 50.0, 0.05, -0.1, 10, 1, 0.0);
+        InvalidConfigException ex1 = assertThrows(InvalidConfigException.class, () ->
+                loader.validateEnemies(Map.of("BadArmour", negativeArmour)));
+        assertTrue(ex1.getMessage().contains("armour must be between 0.0 and 1.0"));
+
+        EnemyConfig excessiveArmour = new EnemyConfig("TooMuchArmour", "MVP", 50.0, 0.05, 1.5, 10, 1, 0.0);
+        InvalidConfigException ex2 = assertThrows(InvalidConfigException.class, () ->
+                loader.validateEnemies(Map.of("TooMuchArmour", excessiveArmour)));
+        assertTrue(ex2.getMessage().contains("armour must be between 0.0 and 1.0"));
+
+        EnemyConfig excessiveEvasion = new EnemyConfig("TooMuchEvasion", "MVP", 50.0, 0.05, 0.2, 10, 1, 1.2);
+        InvalidConfigException ex3 = assertThrows(InvalidConfigException.class, () ->
+                loader.validateEnemies(Map.of("TooMuchEvasion", excessiveEvasion)));
+        assertTrue(ex3.getMessage().contains("evasion chance must be between 0.0 and 1.0"));
+    }
+
+    @Test
+    @DisplayName("Validation fails when waypoint lies outside grid dimensions")
+    void testWaypointOutsideGrid() {
+        List<Position> waypoints = List.of(
+                new Position(0, 1),
+                new Position(15, 1) // 15 >= width (12)
+        );
+        LevelConfig level = new LevelConfig(
+                "OutOfBounds", 12, 8, waypoints,
+                List.of(), List.of(new WaveConfig(List.of(new SpawnGroupConfig("Basic", 5, 10, 0))))
+        );
+
+        InvalidConfigException ex = assertThrows(InvalidConfigException.class, () -> loader.validateLevel(level));
+        assertTrue(ex.getMessage().contains("outside grid bounds"));
+    }
+
+    @Test
+    @DisplayName("Validation fails when consecutive path segment is diagonal (not axis-aligned)")
+    void testDiagonalPathSegment() {
+        List<Position> waypoints = List.of(
+                new Position(0, 1),
+                new Position(4, 5) // Diagonal: both dx and dy != 0
+        );
+        LevelConfig level = new LevelConfig(
+                "DiagonalPath", 12, 8, waypoints,
+                List.of(), List.of(new WaveConfig(List.of(new SpawnGroupConfig("Basic", 5, 10, 0))))
+        );
+
+        InvalidConfigException ex = assertThrows(InvalidConfigException.class, () -> loader.validateLevel(level));
+        assertTrue(ex.getMessage().contains("axis-aligned"));
+    }
+
+    @Test
+    @DisplayName("Validation fails when consecutive path segments are disconnected")
+    void testDisconnectedPathSegment() {
+        PathSegment seg1 = new PathSegment(new Position(0, 1), new Position(5, 1));
+        PathSegment seg2 = new PathSegment(new Position(6, 1), new Position(6, 5)); // Gap from (5,1) to (6,1)
+
+        LevelConfig level = new LevelConfig(
+                "DisconnectedPath", 12, 8,
+                List.of(),
+                List.of(seg1, seg2),
+                List.of(),
+                List.of(new WaveConfig(List.of(new SpawnGroupConfig("Basic", 5, 10, 0))))
+        );
+
+        InvalidConfigException ex = assertThrows(InvalidConfigException.class, () -> loader.validateLevel(level));
+        assertTrue(ex.getMessage().contains("connected"));
+    }
+
+    @Test
+    @DisplayName("Validation fails when level provides contradictory waypoints and segments")
+    void testContradictoryPathConfiguration() {
+        List<Position> waypoints = List.of(
+                new Position(0, 1),
+                new Position(6, 1),
+                new Position(6, 5)
+        );
+        List<PathSegment> segments = List.of(
+                new PathSegment(new Position(0, 1), new Position(4, 1)), // Different endpoint!
+                new PathSegment(new Position(4, 1), new Position(4, 5))
+        );
+
+        LevelConfig level = new LevelConfig(
+                "ContradictoryPath", 12, 8,
+                waypoints,
+                segments,
+                List.of(),
+                List.of(new WaveConfig(List.of(new SpawnGroupConfig("Basic", 5, 10, 0))))
+        );
+
+        InvalidConfigException ex = assertThrows(InvalidConfigException.class, () -> loader.validateLevel(level));
+        assertTrue(ex.getMessage().contains("Contradictory path configuration"));
+    }
+
+    @Test
+    @DisplayName("Validation fails when level references an unknown tower type")
+    void testUnknownTowerTypeReferencedInLevel() {
+        Map<String, TowerConfig> towers = Map.of(
+                "Cannon", new TowerConfig("Cannon", 60, 2.5, 12.0, 12)
+        );
+        Map<String, EnemyConfig> enemies = Map.of(
+                "Basic", new EnemyConfig("Basic", 40.0, 0.05, 8, 1)
+        );
+        LevelConfig level = new LevelConfig(
+                "UnknownTowerLevel", 12, 8,
+                List.of(new Position(0, 1), new Position(5, 1)),
+                List.of("Cannon", "LaserTower"),
+                List.of(new WaveConfig(List.of(new SpawnGroupConfig("Basic", 5, 10, 0))))
+        );
+
+        InvalidConfigException ex = assertThrows(InvalidConfigException.class, () ->
+                loader.validate(towers, enemies, level));
+        assertTrue(ex.getMessage().contains("unknown tower type"));
+        assertTrue(ex.getMessage().contains("LaserTower"));
+    }
+
+    @Test
+    @DisplayName("Validation fails when wave spawn group references an unknown enemy type")
+    void testUnknownEnemyTypeReferencedInWave() {
+        Map<String, TowerConfig> towers = Map.of(
+                "Cannon", new TowerConfig("Cannon", 60, 2.5, 12.0, 12)
+        );
+        Map<String, EnemyConfig> enemies = Map.of(
+                "Basic", new EnemyConfig("Basic", 40.0, 0.05, 8, 1)
+        );
+        LevelConfig level = new LevelConfig(
+                "UnknownEnemyLevel", 12, 8,
+                List.of(new Position(0, 1), new Position(5, 1)),
+                List.of("Cannon"),
+                List.of(new WaveConfig(List.of(
+                        new SpawnGroupConfig("AlienDragon", 5, 10, 0)
+                )))
+        );
+
+        InvalidConfigException ex = assertThrows(InvalidConfigException.class, () ->
+                loader.validate(towers, enemies, level));
+        assertTrue(ex.getMessage().contains("unknown enemy type"));
+        assertTrue(ex.getMessage().contains("AlienDragon"));
+    }
+
+    @Test
+    @DisplayName("Validation fails when wave spawn groups have invalid counts, intervals, or delays")
+    void testInvalidWaveSpawnGroupParameters() {
+        LevelConfig zeroCountLevel = new LevelConfig(
+                "ZeroCount", 10, 10,
+                List.of(new Position(0, 0), new Position(5, 0)),
+                List.of(),
+                List.of(new WaveConfig(List.of(new SpawnGroupConfig("Basic", 0, 10, 0))))
+        );
+        InvalidConfigException ex1 = assertThrows(InvalidConfigException.class, () -> loader.validateLevel(zeroCountLevel));
+        assertTrue(ex1.getMessage().contains("positive count"));
+
+        LevelConfig zeroIntervalLevel = new LevelConfig(
+                "ZeroInterval", 10, 10,
+                List.of(new Position(0, 0), new Position(5, 0)),
+                List.of(),
+                List.of(new WaveConfig(List.of(new SpawnGroupConfig("Basic", 5, 0, 0))))
+        );
+        InvalidConfigException ex2 = assertThrows(InvalidConfigException.class, () -> loader.validateLevel(zeroIntervalLevel));
+        assertTrue(ex2.getMessage().contains("positive interval"));
+
+        LevelConfig negativeDelayLevel = new LevelConfig(
+                "NegativeDelay", 10, 10,
+                List.of(new Position(0, 0), new Position(5, 0)),
+                List.of(),
+                List.of(new WaveConfig(List.of(new SpawnGroupConfig("Basic", 5, 10, -5))))
+        );
+        InvalidConfigException ex3 = assertThrows(InvalidConfigException.class, () -> loader.validateLevel(negativeDelayLevel));
+        assertTrue(ex3.getMessage().contains("start delay cannot be negative"));
+    }
+
+    @Test
+    @DisplayName("Validation fails when map dimensions are non-positive")
+    void testInvalidMapDimensions() {
+        LevelConfig invalidWidth = new LevelConfig(
+                "InvalidWidth", 0, 8,
+                List.of(new Position(0, 1), new Position(5, 1)),
+                List.of(),
+                List.of(new WaveConfig(List.of(new SpawnGroupConfig("Basic", 5, 10, 0))))
+        );
+        assertThrows(InvalidConfigException.class, () -> loader.validateLevel(invalidWidth));
+
+        LevelConfig invalidHeight = new LevelConfig(
+                "InvalidHeight", 10, -5,
+                List.of(new Position(0, 1), new Position(5, 1)),
+                List.of(),
+                List.of(new WaveConfig(List.of(new SpawnGroupConfig("Basic", 5, 10, 0))))
+        );
+        assertThrows(InvalidConfigException.class, () -> loader.validateLevel(invalidHeight));
+    }
+}

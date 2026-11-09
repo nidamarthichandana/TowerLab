@@ -1,0 +1,52 @@
+[
+  {
+    "type": "Basic",
+    "tier": "MVP",
+    "health": 40.0,
+    "speed": 0.05,
+    "armour": 0.0,
+    "reward": 8,
+    "baseDamage": 1,
+    "evasionChance": 0.0
+  },
+  {
+    "type": "Fast",
+    "tier": "MVP",
+    "health": 25.0,
+    "speed": 0.10,
+    "armour": 0.0,
+    "reward": 7,
+    "baseDamage": 1,
+    "evasionChance": 0.20
+  },
+  {
+    "type": "Armored",
+    "tier": "MVP",
+    "health": 120.0,
+    "speed": 0.035,
+    "armour": 0.40,
+    "reward": 20,
+    "baseDamage": 2,
+    "evasionChance": 0.0
+  },
+  {
+    "type": "Flying",
+    "tier": "Stretch",
+    "health": 60.0,
+    "speed": 0.06,
+    "armour": 0.0,
+    "reward": 12,
+    "baseDamage": 1,
+    "evasionChance": 0.0
+  },
+  {
+    "type": "Boss",
+    "tier": "Stretch",
+    "health": 800.0,
+    "speed": 0.03,
+    "armour": 0.30,
+    "reward": 150,
+    "baseDamage": 10,
+    "evasionChance": 0.0
+  }
+]
