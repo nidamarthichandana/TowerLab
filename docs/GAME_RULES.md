@@ -62,8 +62,8 @@ Level 1 stats. Targeting column: G = ground, A = air.
 
 All effects are implemented behind a `StatusEffect` abstraction with configurable duration and magnitude.
 
-- **GR-21 [MVP] Slow:** reduces movement speed by a fraction for a duration. Effects do not stack. A stronger slow replaces a weaker one, and reapplying refreshes the duration.
-- **GR-22 [MVP] Burn:** deals 1 damage every 5 ticks for 40 ticks. Reapplying refreshes the duration without stacking. Applied by Cannon at upgrade level 2.
+- **GR-21 [MVP] Slow:** Effects do not stack. A stronger incoming slow replaces a weaker active one. An equal slow refreshes the duration. A weaker incoming slow is ignored.
+- **GR-22 [MVP] Burn:** Burn deals 1 damage at 5, 10, ..., 40 ticks after application (8 procs). Reapplying refreshes the remaining duration to 40 without resetting the interval or stacking.
 - **GR-23 [Stretch] Freeze:** stops movement for a duration. Boss enemies are immune.
 
 ## 8. Upgrades and Selling
