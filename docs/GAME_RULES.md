@@ -1,194 +1,201 @@
-# TowerLab – Game Rules and Mechanics
+# TowerLab – Game Rules and Mechanics (v2)
 
-## 1. Project Overview
+Every rule has an ID (GR-n) for the SRS and test traceability. Each item is tagged **[MVP]**, **[Stretch]** or **[Later]**.
+All numbers are **starting values**. Tuning them with the balance analyzer is part of the project.
 
-TowerLab is a tower defense game combined with a simulation and balance analytics platform. Players defend a base against successive waves of enemies by strategically placing and upgrading towers.
+## 1. Units and Time
 
-The platform also allows developers to execute multiple headless simulations, compare configurations and evaluate game balance using statistical metrics.
+- **GR-1 [MVP]** Distances are in grid cells. Time is in **ticks**. The simulation advances in fixed steps of one tick.
+- **GR-2 [MVP]** Speeds are in cells per tick. Cooldowns, durations and delays are in ticks.
 
-## 2. Game Objective
+## 2. Objective
 
-The player's objective is to prevent enemies from reaching the destination point.
+- **GR-3 [MVP]** The player defends the base from successive waves of enemies.
+- **GR-4 [MVP]** The player starts with **150 gold** and **20 base health**.
+- **GR-5 [MVP]** The player wins by clearing all waves with base health above 0. The player loses when base health reaches 0.
+- **GR-6 [MVP]** A simulation also ends as a LOSS if it reaches the **max tick limit (20,000)**.
 
-- Players begin with a fixed amount of health and coins.
-- Towers are purchased and placed strategically.
-- Enemies follow paths towards the destination.
-- Towers automatically detect and attack enemies within their range.
-- Players win by surviving all waves.
-- Players lose when their base health reaches zero.
+## 3. Map
 
-## 3. Game Environment
+- **GR-7 [MVP]** The first version has one configurable grid map (12 × 8) with a start cell, a destination cell and a predefined path given as waypoints.
+- **GR-8 [MVP]** Example path: (0,1) → (6,1) → (6,5) → (10,5) → (10,2) → (11,2). Length is 18 cells.
+- **GR-9 [MVP]** Towers can only be placed on buildable cells: not on the path, one tower per cell, inside the grid.
+- **GR-10 [MVP]** Paths come from a `PathFinder` interface. The MVP implementation reads the predefined waypoints.
+- **GR-11 [Stretch]** An A* implementation computes the path once at map load for grids with obstacles. Flying enemies ignore the path and move in a straight line from start to destination.
 
-- The initial version contains one configurable grid-based map.
-- The map contains a starting point, destination and predefined enemy path.
-- Towers can only be placed on valid buildable cells.
-- Enemies follow a path towards the destination.
-- Pathfinding will use A* for configurable routes where applicable.
+## 4. Towers
 
-## 4. Tower Types
+Level 1 stats. Targeting column: G = ground, A = air.
 
-### 4.1 Cannon Tower
-- Moderate damage.
-- Medium attack speed.
-- Area-of-effect damage.
-- Effective against groups of enemies.
+| Tower | Tier | Cost | Range | Damage | Cooldown | Targets | Special |
+|---|---|---|---|---|---|---|---|
+| Cannon | MVP | 60 | 2.5 | 12 | 12 | G | Splash: enemies within 1.0 cells of the target take full damage |
+| Sniper | MVP | 90 | 5.0 | 40 | 40 | G, A | None |
+| Frost | MVP | 50 | 2.0 | 3 | 15 | G, A | Slow 50% for 30 ticks |
+| Rapid | Stretch | 70 | 2.0 | 4 | 3 | G, A | None |
 
-### 4.2 Sniper Tower
-- High single-target damage.
-- Long attack range.
-- Low attack speed.
-- Effective against high-health enemies.
+- **GR-12 [MVP]** A tower attacks only when its cooldown has elapsed and a valid target is in range.
+- **GR-13 [MVP]** A tower can only select enemies it is able to target (ground, air or both).
+- **GR-14 [MVP]** Each tower has a targeting strategy that the player can change at any time the player can act.
+- **GR-15 [MVP]** Targeting strategies: **First** (furthest along the path), **Last** (least progress), **Strongest** (highest current health), **Closest** (nearest to the tower). Ties are broken by the lowest enemy id.
 
-### 4.3 Frost Tower
-- Low direct damage.
-- Applies a movement slow effect.
-- Effective for controlling enemy movement.
+## 5. Enemies
 
-### 4.4 Rapid Tower
-- Low damage per attack.
-- Very high attack speed.
-- Effective against fast-moving enemies.
+| Enemy | Tier | Health | Speed | Armour | Reward | Base damage | Notes |
+|---|---|---|---|---|---|---|---|
+| Basic | MVP | 40 | 0.05 | 0% | 8 | 1 | Ground baseline |
+| Fast | MVP | 25 | 0.10 | 0% | 7 | 1 | **20% evasion chance** |
+| Armored | MVP | 120 | 0.035 | 40% | 20 | 2 | Ground |
+| Flying | Stretch | 60 | 0.06 | 0% | 12 | 1 | Air; straight-line movement |
+| Boss | Stretch | 800 | 0.03 | 30% | 150 | 10 | Immune to Freeze; slow effect halved |
 
-Tower attributes include:
-- Damage
-- Attack speed
-- Range
-- Purchase cost
-- Upgrade level
-- Special ability
+- **GR-16 [MVP]** An enemy that reaches the destination is removed and reduces base health by its base damage.
+- **GR-17 [MVP]** A defeated enemy gives its reward in gold.
 
-## 5. Enemy Types
+## 6. Combat
 
-### 5.1 Fast Enemy
-- Low health.
-- High movement speed.
-- Difficult to target.
-
-### 5.2 Armored Enemy
-- High health.
-- Low movement speed.
-- Reduces incoming damage.
-
-### 5.3 Flying Enemy
-- Moderate health.
-- Medium movement speed.
-- May bypass certain ground-only obstacles.
-- Requires compatible tower targeting.
-
-### 5.4 Boss Enemy
-- Very high health.
-- Special resistance.
-- Appears in selected later waves.
-
-Enemy attributes include:
-- Health
-- Movement speed
-- Armour
-- Reward
-- Damage dealt to the base
-- Special abilities
-
-## 6. Combat Mechanics
-
-- Towers automatically identify enemies within their attack range.
-- Target selection depends on the tower's targeting strategy.
-- Available targeting strategies include First, Last, Strongest and Closest.
-- Towers attack according to their attack cooldown.
-- Damage is calculated after applying enemy armour and applicable effects.
-- Enemies are removed when their health reaches zero.
-- Defeated enemies reward the player with coins.
-- Enemies reaching the destination reduce base health.
+- **GR-18 [MVP]** Final damage = `max(1, round(rawDamage × (1 − armour)))`. Burn damage ignores armour.
+- **GR-19 [MVP]** When a tower attacks an enemy with an evasion chance, a seeded random roll decides whether the attack misses. A miss emits a `TowerMissed` event.
+- **GR-20 [MVP]** Cannon splash applies to all valid enemies within its splash radius of the target, using the same damage formula per enemy.
 
 ## 7. Status Effects
 
-The game supports special effects:
+All effects are implemented behind a `StatusEffect` abstraction with configurable duration and magnitude.
 
-- Slow: Reduces enemy movement speed temporarily.
-- Burn: Deals damage over time.
-- Armour: Reduces incoming damage.
-- Freeze: Temporarily prevents enemy movement.
+- **GR-21 [MVP] Slow:** reduces movement speed by a fraction for a duration. Effects do not stack. A stronger slow replaces a weaker one, and reapplying refreshes the duration.
+- **GR-22 [MVP] Burn:** deals 1 damage every 5 ticks for 40 ticks. Reapplying refreshes the duration without stacking. Applied by Cannon at upgrade level 2.
+- **GR-23 [Stretch] Freeze:** stops movement for a duration. Boss enemies are immune.
 
-Effects must have configurable duration and magnitude.
+## 8. Upgrades and Selling
 
-## 8. Tower Upgrades and Selling
+- **GR-24 [MVP]** Towers have one upgrade (level 2) in the MVP. Multi-level upgrades are [Stretch].
+- **GR-25 [MVP]** Upgrade effects:
 
-- Towers can be upgraded using coins.
-- Upgrades improve attributes such as damage, range or attack speed.
-- Each upgrade has a cost.
-- Towers can be sold for a partial refund.
-- Upgrade levels and maximum upgrade limits are configurable.
+| Tower | Upgrade cost | Level 2 effect |
+|---|---|---|
+| Cannon | 40 | Damage +50%, range +0.5, applies Burn |
+| Sniper | 60 | Damage +50% |
+| Frost | 35 | Range +0.5, slow 60% |
 
-## 9. Wave System
+- **GR-26 [MVP]** Selling refunds **70%** of the total gold spent on the tower (purchase plus upgrade).
+- **GR-27 [MVP]** Insufficient gold rejects the action with `InsufficientFundsException`. Invalid placement is rejected with `InvalidPlacementException`.
 
-- The game consists of multiple successive waves.
-- Each wave contains a predefined or generated enemy composition.
-- Difficulty increases with wave progression.
-- Later waves introduce stronger enemies and bosses.
-- A short preparation period may be provided between waves.
+## 9. Waves
 
-## 10. Game States
+- **GR-28 [MVP]** The game has **5 waves**. Each wave has spawn groups: `(enemyType, count, intervalTicks, startDelayTicks)`.
 
-The game supports the following states:
+| Wave | Spawn groups |
+|---|---|
+| 1 | 8 Basic, interval 20 |
+| 2 | 10 Basic, interval 15; 4 Fast, interval 25, delay 100 |
+| 3 | 10 Basic, interval 15; 3 Armored, interval 60 |
+| 4 | 12 Fast, interval 12; 6 Basic, interval 18, delay 60 |
+| 5 | 6 Armored, interval 40; 10 Basic, interval 12 (Boss added when implemented) |
 
-- READY
-- PLAYING
-- PAUSED
-- WAVE_COMPLETED
-- WON
-- LOST
+- **GR-29 [MVP]** Each spawn time gets a seeded random **jitter of ±3 ticks**.
+- **GR-30 [MVP]** A wave is completed when all its enemies have spawned and none remain alive. Clearing a wave gives **20 gold**.
+- **GR-31 [MVP]** After a wave, a **preparation period of 100 ticks** allows build, upgrade, sell and targeting changes. In headless simulations the next wave starts automatically when the period ends.
+- **GR-32 [Later]** Generated waves and additional levels.
 
-Invalid actions must be rejected according to the current game state.
+## 10. Game States and Player Actions
 
-## 11. Simulation Engine
+- **GR-33 [MVP]** States: READY, PLAYING, WAVE_COMPLETED, WON, LOST. PAUSED is [Stretch].
+- **GR-34 [MVP]** Transitions:
 
-The simulation engine executes game sessions without graphical rendering.
+| From | Event | To |
+|---|---|---|
+| READY | StartWave | PLAYING |
+| PLAYING | Wave cleared (not last) | WAVE_COMPLETED |
+| PLAYING | Last wave cleared | WON |
+| PLAYING | Base health reaches 0 or max ticks | LOST |
+| WAVE_COMPLETED | StartWave or prep period ends | PLAYING |
+| PLAYING | Pause [Stretch] | PAUSED |
+| PAUSED | Resume [Stretch] | PLAYING |
 
-Features:
+- **GR-35 [MVP]** Allowed actions by state:
 
-- Run multiple simulations for one configuration.
-- Support deterministic random seeds for reproducibility.
-- Reuse the same combat, movement and wave mechanics as the playable game.
-- Collect results from every simulation.
-- Compare different configurations.
+| Action | READY | PLAYING | WAVE_COMPLETED | WON / LOST |
+|---|---|---|---|---|
+| Build / Upgrade / Sell | Yes | No | Yes | No |
+| Change targeting | Yes | Yes | Yes | No |
+| StartWave | Yes | No | Yes | No |
 
-## 12. Analytics Metrics
+- **GR-36 [MVP]** Every player action is a **command object** (`BuildTower`, `UpgradeTower`, `SellTower`, `ChangeTargeting`, `StartWave`) tagged with the wave index it applies to. The same action list drives the playable game and batch simulations.
+- **GR-37 [MVP]** Invalid actions are rejected according to the current state.
 
-The platform calculates:
+## 11. Tick Order
 
-- Win rate.
-- Average damage dealt.
-- Average enemies defeated.
-- Average enemy leakage.
-- Average remaining base health.
-- Tower damage contribution.
-- Tower cost efficiency.
-- Average game duration.
+1. Apply scheduled player commands for this point in the game.
+2. Spawn enemies that are due.
+3. Update status effects.
+4. Move enemies. An enemy reaching the destination is removed and damages the base.
+5. Update towers in order of placement: select target, apply damage and effects, emit events.
+6. Remove defeated enemies and award gold.
+7. Check wave completion and win/loss conditions, update the state.
 
-## 13. Balance Analysis
+## 12. Events
 
-The analytics module evaluates game configurations and identifies potential balance issues.
+- **GR-38 [MVP]** Events carry the tick number plus the data needed for replay and analytics.
 
-Examples:
+| Event | Fields |
+|---|---|
+| WaveStarted | wave |
+| EnemySpawned | enemyId, type, wave |
+| EnemyMoved | enemyId, position |
+| TowerFired | towerId, towerType, enemyId, damageDealt |
+| TowerMissed | towerId, enemyId |
+| EffectApplied | enemyId, effectType, magnitude, duration |
+| EnemyKilled | enemyId, type, towerId, reward |
+| LifeLost | enemyId, damage, healthLeft |
+| ActionRejected | action, reason |
+| GameEnded | outcome |
 
-- Towers with unusually high damage-per-cost ratios.
-- Towers with consistently low utilization.
-- Configurations with extremely high or low win rates.
-- Enemy types that cause disproportionate base damage.
+## 13. Simulation Engine
 
-Initial balance recommendations will be rule-based.
+- **GR-39 [MVP]** The engine runs sessions without graphical rendering using the same mechanics as the playable game.
+- **GR-40 [MVP]** One seeded random generator, injected into the simulation, is used for **spawn jitter and evasion rolls**. The order of use is fixed.
+- **GR-41 [MVP]** The same seed, configuration and action list always produce an identical event list.
+- **GR-42 [MVP]** Batch runs execute N simulations (different seeds) on a thread pool and collect results per run.
+- **GR-43 [MVP]** Different configurations can be compared on the same metrics.
 
-## 14. Winning and Losing Conditions
+## 14. Analytics Metrics
 
-WIN:
-The player survives all configured waves and no active enemies remain.
+- **GR-44 [MVP]** Win rate = wins ÷ runs.
+- **GR-45 [MVP]** Averages per run: damage dealt, enemies defeated, enemy leakage (enemies reaching the destination), remaining base health, game duration in ticks.
+- **GR-46 [MVP]** Tower damage contribution = damage by tower type ÷ total damage.
+- **GR-47 [MVP]** Tower cost efficiency = total damage by tower type ÷ gold spent on that type (purchases and upgrades).
+- **GR-48 [MVP]** Tower utilization = ticks in which the tower fired ÷ ticks it was on the map.
 
-LOSS:
-The player's base health reaches zero.
+## 15. Balance Analysis (rule-based)
 
-## 15. Technical Constraints
+- **GR-49 [MVP]** *Overpowered tower:* cost efficiency above 1.5× the median across tower types.
+- **GR-50 [MVP]** *Underused tower:* utilization below 20%.
+- **GR-51 [MVP]** *Unbalanced configuration:* win rate above 90% or below 10%.
+- **GR-52 [Stretch]** *Disproportionate enemy:* one enemy type causes over 50% of leakage damage.
+- **GR-53 [MVP]** Each finding includes the rule, the metric value and a short suggested action.
 
-- The core game engine must be independent of the frontend.
-- The playable game and simulation engine must reuse the same game mechanics.
-- Simulation results must be reproducible using fixed random seeds.
-- Game configuration must be separated from game execution.
-- The system must validate player actions and game configurations.
+## 16. Configuration and Validation
+
+- **GR-54 [MVP]** Towers, enemies, waves, economy and the map are loaded from JSON files, separate from execution code.
+- **GR-55 [MVP]** Invalid configurations are rejected with `InvalidConfigException`: negative or zero stats, waypoints outside the grid, non-connected path segments, unknown enemy or tower types, and waves with no spawn groups.
+
+## 17. Technical Constraints
+
+- **GR-56 [MVP]** The core engine is independent of the frontend and of Spring.
+- **GR-57 [MVP]** The playable game and the simulator reuse the same mechanics classes.
+- **GR-58 [MVP]** Results are reproducible using fixed seeds.
+- **GR-59 [MVP]** Configuration is separate from execution.
+- **GR-60 [MVP]** Player actions and configurations are validated.
+
+## Changes from v1
+
+| Change | Reason |
+|---|---|
+| Added Basic enemy | Baseline for comparison |
+| Added evasion and spawn jitter | Gives the seed a real purpose and makes batch results a distribution |
+| Removed Armour as a status effect | Armour is an enemy attribute with one formula |
+| Burn from Cannon L2, Freeze as Stretch | Every effect now has a source |
+| Player actions as commands, with an actions-by-state table | Same input drives game and simulation |
+| A* moved to Stretch behind `PathFinder` | A fixed path doesn't need it |
+| Events carry tower and damage data | Needed for analytics |
+| Rapid, Flying, Boss, Freeze, Pause marked Stretch | Fits the schedule |
