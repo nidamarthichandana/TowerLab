@@ -2,6 +2,7 @@ package com.towerlab.engine.config;
 
 import com.towerlab.engine.exception.InvalidConfigException;
 import com.towerlab.engine.model.Position;
+import com.towerlab.engine.test.TestLevelHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -97,6 +98,14 @@ class ConfigLoaderTest {
         // Verify waypoints and waves match GR-8 & GR-28
         assertEquals(6, config.level().waypoints().size());
         assertEquals(5, config.level().waves().size());
+
+        // Verify starting economy, base health, preparation period, bonus, max ticks, and jitter
+        assertEquals(150, config.level().startingGold());
+        assertEquals(20, config.level().startingBaseHealth());
+        assertEquals(100, config.level().prepPeriodTicks());
+        assertEquals(20, config.level().waveClearBonus());
+        assertEquals(20000, config.level().maxTicks());
+        assertEquals(3, config.level().spawnJitterTicks());
     }
 
     @Test
@@ -117,6 +126,12 @@ class ConfigLoaderTest {
                   "name": "Test Level",
                   "width": 10,
                   "height": 10,
+                  "startingGold": 150,
+                  "startingBaseHealth": 20,
+                  "prepPeriodTicks": 100,
+                  "waveClearBonus": 20,
+                  "maxTicks": 20000,
+                  "spawnJitterTicks": 3,
                   "waypoints": [
                     {"x": 0, "y": 2},
                     {"x": 5, "y": 2},
@@ -225,7 +240,7 @@ class ConfigLoaderTest {
                 new Position(0, 1),
                 new Position(15, 1) // 15 >= width (12)
         );
-        LevelConfig level = new LevelConfig(
+        LevelConfig level = TestLevelHelper.createStandardLevel(
                 "OutOfBounds", 12, 8, waypoints,
                 List.of(), List.of(new WaveConfig(List.of(new SpawnGroupConfig("Basic", 5, 10, 0))))
         );
@@ -241,7 +256,7 @@ class ConfigLoaderTest {
                 new Position(0, 1),
                 new Position(4, 5) // Diagonal: both dx and dy != 0
         );
-        LevelConfig level = new LevelConfig(
+        LevelConfig level = TestLevelHelper.createStandardLevel(
                 "DiagonalPath", 12, 8, waypoints,
                 List.of(), List.of(new WaveConfig(List.of(new SpawnGroupConfig("Basic", 5, 10, 0))))
         );
@@ -256,7 +271,7 @@ class ConfigLoaderTest {
         PathSegment seg1 = new PathSegment(new Position(0, 1), new Position(5, 1));
         PathSegment seg2 = new PathSegment(new Position(6, 1), new Position(6, 5)); // Gap from (5,1) to (6,1)
 
-        LevelConfig level = new LevelConfig(
+        LevelConfig level = TestLevelHelper.createStandardLevelWithSegments(
                 "DisconnectedPath", 12, 8,
                 List.of(),
                 List.of(seg1, seg2),
@@ -281,7 +296,7 @@ class ConfigLoaderTest {
                 new PathSegment(new Position(4, 1), new Position(4, 5))
         );
 
-        LevelConfig level = new LevelConfig(
+        LevelConfig level = TestLevelHelper.createStandardLevelWithSegments(
                 "ContradictoryPath", 12, 8,
                 waypoints,
                 segments,
@@ -302,7 +317,7 @@ class ConfigLoaderTest {
         Map<String, EnemyConfig> enemies = Map.of(
                 "Basic", new EnemyConfig("Basic", 40.0, 0.05, 8, 1)
         );
-        LevelConfig level = new LevelConfig(
+        LevelConfig level = TestLevelHelper.createStandardLevel(
                 "UnknownTowerLevel", 12, 8,
                 List.of(new Position(0, 1), new Position(5, 1)),
                 List.of("Cannon", "LaserTower"),
@@ -324,7 +339,7 @@ class ConfigLoaderTest {
         Map<String, EnemyConfig> enemies = Map.of(
                 "Basic", new EnemyConfig("Basic", 40.0, 0.05, 8, 1)
         );
-        LevelConfig level = new LevelConfig(
+        LevelConfig level = TestLevelHelper.createStandardLevel(
                 "UnknownEnemyLevel", 12, 8,
                 List.of(new Position(0, 1), new Position(5, 1)),
                 List.of("Cannon"),
@@ -342,7 +357,7 @@ class ConfigLoaderTest {
     @Test
     @DisplayName("Validation fails when wave spawn groups have invalid counts, intervals, or delays")
     void testInvalidWaveSpawnGroupParameters() {
-        LevelConfig zeroCountLevel = new LevelConfig(
+        LevelConfig zeroCountLevel = TestLevelHelper.createStandardLevel(
                 "ZeroCount", 10, 10,
                 List.of(new Position(0, 0), new Position(5, 0)),
                 List.of(),
@@ -351,7 +366,7 @@ class ConfigLoaderTest {
         InvalidConfigException ex1 = assertThrows(InvalidConfigException.class, () -> loader.validateLevel(zeroCountLevel));
         assertTrue(ex1.getMessage().contains("positive count"));
 
-        LevelConfig zeroIntervalLevel = new LevelConfig(
+        LevelConfig zeroIntervalLevel = TestLevelHelper.createStandardLevel(
                 "ZeroInterval", 10, 10,
                 List.of(new Position(0, 0), new Position(5, 0)),
                 List.of(),
@@ -360,7 +375,7 @@ class ConfigLoaderTest {
         InvalidConfigException ex2 = assertThrows(InvalidConfigException.class, () -> loader.validateLevel(zeroIntervalLevel));
         assertTrue(ex2.getMessage().contains("positive interval"));
 
-        LevelConfig negativeDelayLevel = new LevelConfig(
+        LevelConfig negativeDelayLevel = TestLevelHelper.createStandardLevel(
                 "NegativeDelay", 10, 10,
                 List.of(new Position(0, 0), new Position(5, 0)),
                 List.of(),
@@ -373,7 +388,7 @@ class ConfigLoaderTest {
     @Test
     @DisplayName("Validation fails when map dimensions are non-positive")
     void testInvalidMapDimensions() {
-        LevelConfig invalidWidth = new LevelConfig(
+        LevelConfig invalidWidth = TestLevelHelper.createStandardLevel(
                 "InvalidWidth", 0, 8,
                 List.of(new Position(0, 1), new Position(5, 1)),
                 List.of(),
@@ -381,7 +396,7 @@ class ConfigLoaderTest {
         );
         assertThrows(InvalidConfigException.class, () -> loader.validateLevel(invalidWidth));
 
-        LevelConfig invalidHeight = new LevelConfig(
+        LevelConfig invalidHeight = TestLevelHelper.createStandardLevel(
                 "InvalidHeight", 10, -5,
                 List.of(new Position(0, 1), new Position(5, 1)),
                 List.of(),
@@ -400,5 +415,127 @@ class ConfigLoaderTest {
                 """;
         Files.writeString(tempDir.resolve("towers.json"), badTowersJson);
         assertThrows(InvalidConfigException.class, () -> loader.loadTowers(tempDir.resolve("towers.json")));
+    }
+
+    @Test
+    @DisplayName("Validation fails when starting gold, starting base health, prep period, bonus, max ticks, or jitter are non-positive or null")
+    void testInvalidStartingStatsRejected() {
+        List<Position> waypoints = List.of(new Position(0, 1), new Position(5, 1));
+        List<WaveConfig> waves = List.of(new WaveConfig(List.of(new SpawnGroupConfig("Basic", 5, 10, 0))));
+
+        LevelConfig zeroGold = TestLevelHelper.createLevel("ZeroGold", 10, 8, waypoints, List.of(), waves, 0, 20, 100);
+        InvalidConfigException ex1 = assertThrows(InvalidConfigException.class, () -> loader.validateLevel(zeroGold));
+        assertTrue(ex1.getMessage().contains("Starting gold must be positive"));
+
+        LevelConfig zeroHealth = TestLevelHelper.createLevel("ZeroHealth", 10, 8, waypoints, List.of(), waves, 150, -1, 100);
+        InvalidConfigException ex2 = assertThrows(InvalidConfigException.class, () -> loader.validateLevel(zeroHealth));
+        assertTrue(ex2.getMessage().contains("Starting base health must be positive"));
+
+        LevelConfig zeroPrep = TestLevelHelper.createLevel("ZeroPrep", 10, 8, waypoints, List.of(), waves, 150, 20, 0);
+        InvalidConfigException ex3 = assertThrows(InvalidConfigException.class, () -> loader.validateLevel(zeroPrep));
+        assertTrue(ex3.getMessage().contains("Preparation period ticks must be positive"));
+
+        LevelConfig zeroBonus = TestLevelHelper.createLevel("ZeroBonus", 10, 8, waypoints, List.of(), List.of(), waves, 150, 20, 100, 0, 20000, 3);
+        InvalidConfigException exBonus = assertThrows(InvalidConfigException.class, () -> loader.validateLevel(zeroBonus));
+        assertTrue(exBonus.getMessage().contains("Wave clear bonus must be positive"));
+
+        LevelConfig zeroMaxTicks = TestLevelHelper.createLevel("ZeroMaxTicks", 10, 8, waypoints, List.of(), List.of(), waves, 150, 20, 100, 20, 0, 3);
+        InvalidConfigException exMax = assertThrows(InvalidConfigException.class, () -> loader.validateLevel(zeroMaxTicks));
+        assertTrue(exMax.getMessage().contains("Max ticks must be positive"));
+
+        LevelConfig zeroJitter = TestLevelHelper.createLevel("ZeroJitter", 10, 8, waypoints, List.of(), List.of(), waves, 150, 20, 100, 20, 20000, 0);
+        InvalidConfigException exJitter = assertThrows(InvalidConfigException.class, () -> loader.validateLevel(zeroJitter));
+        assertTrue(exJitter.getMessage().contains("Spawn jitter ticks must be positive"));
+
+        LevelConfig nullGold = TestLevelHelper.createLevel("NullGold", 10, 8, waypoints, List.of(), waves, null, 20, 100);
+        assertThrows(InvalidConfigException.class, () -> loader.validateLevel(nullGold));
+
+        LevelConfig nullHealth = TestLevelHelper.createLevel("NullHealth", 10, 8, waypoints, List.of(), waves, 150, null, 100);
+        assertThrows(InvalidConfigException.class, () -> loader.validateLevel(nullHealth));
+
+        LevelConfig nullPrep = TestLevelHelper.createLevel("NullPrep", 10, 8, waypoints, List.of(), waves, 150, 20, null);
+        assertThrows(InvalidConfigException.class, () -> loader.validateLevel(nullPrep));
+
+        LevelConfig nullBonus = TestLevelHelper.createLevel("NullBonus", 10, 8, waypoints, List.of(), List.of(), waves, 150, 20, 100, null, 20000, 3);
+        assertThrows(InvalidConfigException.class, () -> loader.validateLevel(nullBonus));
+
+        LevelConfig nullMax = TestLevelHelper.createLevel("NullMax", 10, 8, waypoints, List.of(), List.of(), waves, 150, 20, 100, 20, null, 3);
+        assertThrows(InvalidConfigException.class, () -> loader.validateLevel(nullMax));
+
+        LevelConfig nullJitter = TestLevelHelper.createLevel("NullJitter", 10, 8, waypoints, List.of(), List.of(), waves, 150, 20, 100, 20, 20000, null);
+        assertThrows(InvalidConfigException.class, () -> loader.validateLevel(nullJitter));
+    }
+
+    @Test
+    @DisplayName("Validation fails when level JSON lacks startingGold, startingBaseHealth, prepPeriodTicks, waveClearBonus, maxTicks, or spawnJitterTicks")
+    void testMissingRequiredStatsInJsonRejected(@TempDir Path tempDir) throws IOException {
+        String baseJson = """
+                {
+                  "name": "MissingFieldLevel",
+                  "width": 10,
+                  "height": 10,
+                  "waypoints": [{"x": 0, "y": 1}, {"x": 5, "y": 1}],
+                  "waves": [{"waveNumber": 1, "spawnGroups": [{"enemyType": "Basic", "count": 1, "interval": 10}]}]
+                """;
+
+        // Missing startingGold
+        String missingGoldJson = baseJson + """
+                  ,"startingBaseHealth": 20, "prepPeriodTicks": 100, "waveClearBonus": 20, "maxTicks": 20000, "spawnJitterTicks": 3
+                }
+                """;
+        Path goldFile = tempDir.resolve("missingGold.json");
+        Files.writeString(goldFile, missingGoldJson);
+        InvalidConfigException exGold = assertThrows(InvalidConfigException.class, () -> loader.loadLevel(goldFile));
+        assertTrue(exGold.getMessage().contains("startingGold"));
+
+        // Missing startingBaseHealth
+        String missingHealthJson = baseJson + """
+                  ,"startingGold": 150, "prepPeriodTicks": 100, "waveClearBonus": 20, "maxTicks": 20000, "spawnJitterTicks": 3
+                }
+                """;
+        Path healthFile = tempDir.resolve("missingHealth.json");
+        Files.writeString(healthFile, missingHealthJson);
+        InvalidConfigException exHealth = assertThrows(InvalidConfigException.class, () -> loader.loadLevel(healthFile));
+        assertTrue(exHealth.getMessage().contains("startingBaseHealth"));
+
+        // Missing prepPeriodTicks
+        String missingPrepJson = baseJson + """
+                  ,"startingGold": 150, "startingBaseHealth": 20, "waveClearBonus": 20, "maxTicks": 20000, "spawnJitterTicks": 3
+                }
+                """;
+        Path prepFile = tempDir.resolve("missingPrep.json");
+        Files.writeString(prepFile, missingPrepJson);
+        InvalidConfigException exPrep = assertThrows(InvalidConfigException.class, () -> loader.loadLevel(prepFile));
+        assertTrue(exPrep.getMessage().contains("prepPeriodTicks"));
+
+        // Missing waveClearBonus
+        String missingBonusJson = baseJson + """
+                  ,"startingGold": 150, "startingBaseHealth": 20, "prepPeriodTicks": 100, "maxTicks": 20000, "spawnJitterTicks": 3
+                }
+                """;
+        Path bonusFile = tempDir.resolve("missingBonus.json");
+        Files.writeString(bonusFile, missingBonusJson);
+        InvalidConfigException exBonus = assertThrows(InvalidConfigException.class, () -> loader.loadLevel(bonusFile));
+        assertTrue(exBonus.getMessage().contains("waveClearBonus"));
+
+        // Missing maxTicks
+        String missingMaxTicksJson = baseJson + """
+                  ,"startingGold": 150, "startingBaseHealth": 20, "prepPeriodTicks": 100, "waveClearBonus": 20, "spawnJitterTicks": 3
+                }
+                """;
+        Path maxTicksFile = tempDir.resolve("missingMaxTicks.json");
+        Files.writeString(maxTicksFile, missingMaxTicksJson);
+        InvalidConfigException exMaxTicks = assertThrows(InvalidConfigException.class, () -> loader.loadLevel(maxTicksFile));
+        assertTrue(exMaxTicks.getMessage().contains("maxTicks"));
+
+        // Missing spawnJitterTicks
+        String missingJitterJson = baseJson + """
+                  ,"startingGold": 150, "startingBaseHealth": 20, "prepPeriodTicks": 100, "waveClearBonus": 20, "maxTicks": 20000
+                }
+                """;
+        Path jitterFile = tempDir.resolve("missingJitter.json");
+        Files.writeString(jitterFile, missingJitterJson);
+        InvalidConfigException exJitter = assertThrows(InvalidConfigException.class, () -> loader.loadLevel(jitterFile));
+        assertTrue(exJitter.getMessage().contains("spawnJitterTicks"));
     }
 }

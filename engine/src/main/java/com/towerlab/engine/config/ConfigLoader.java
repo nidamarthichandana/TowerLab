@@ -229,7 +229,29 @@ public class ConfigLoader {
 
     public LevelConfig loadLevel(InputStream in) {
         try {
-            LevelConfig level = objectMapper.readValue(in, LevelConfig.class);
+            JsonNode root = objectMapper.readTree(in);
+            if (root == null || !root.isObject()) {
+                throw new InvalidConfigException("level configuration must be a JSON object");
+            }
+            if (!root.has("startingGold")) {
+                throw new InvalidConfigException("Level configuration is missing required 'startingGold'");
+            }
+            if (!root.has("startingBaseHealth")) {
+                throw new InvalidConfigException("Level configuration is missing required 'startingBaseHealth'");
+            }
+            if (!root.has("prepPeriodTicks")) {
+                throw new InvalidConfigException("Level configuration is missing required 'prepPeriodTicks'");
+            }
+            if (!root.has("waveClearBonus")) {
+                throw new InvalidConfigException("Level configuration is missing required 'waveClearBonus'");
+            }
+            if (!root.has("maxTicks")) {
+                throw new InvalidConfigException("Level configuration is missing required 'maxTicks'");
+            }
+            if (!root.has("spawnJitterTicks")) {
+                throw new InvalidConfigException("Level configuration is missing required 'spawnJitterTicks'");
+            }
+            LevelConfig level = objectMapper.treeToValue(root, LevelConfig.class);
             validateLevel(level);
             return level;
         } catch (IOException e) {
@@ -354,6 +376,44 @@ public class ConfigLoader {
         // Requirement 2: Map dimensions must be positive (GR-7)
         if (level.width() <= 0 || level.height() <= 0) {
             throw new InvalidConfigException("Map dimensions must be positive: width=" + level.width() + ", height=" + level.height());
+        }
+
+        // Starting economy, health, and preparation period must be positive (GR-4, GR-31)
+        if (level.startingGold() == null) {
+            throw new InvalidConfigException("Level configuration is missing required 'startingGold'");
+        }
+        if (level.startingGold() <= 0) {
+            throw new InvalidConfigException("Starting gold must be positive, got: " + level.startingGold());
+        }
+        if (level.startingBaseHealth() == null) {
+            throw new InvalidConfigException("Level configuration is missing required 'startingBaseHealth'");
+        }
+        if (level.startingBaseHealth() <= 0) {
+            throw new InvalidConfigException("Starting base health must be positive, got: " + level.startingBaseHealth());
+        }
+        if (level.prepPeriodTicks() == null) {
+            throw new InvalidConfigException("Level configuration is missing required 'prepPeriodTicks'");
+        }
+        if (level.prepPeriodTicks() <= 0) {
+            throw new InvalidConfigException("Preparation period ticks must be positive, got: " + level.prepPeriodTicks());
+        }
+        if (level.waveClearBonus() == null) {
+            throw new InvalidConfigException("Level configuration is missing required 'waveClearBonus'");
+        }
+        if (level.waveClearBonus() <= 0) {
+            throw new InvalidConfigException("Wave clear bonus must be positive, got: " + level.waveClearBonus());
+        }
+        if (level.maxTicks() == null) {
+            throw new InvalidConfigException("Level configuration is missing required 'maxTicks'");
+        }
+        if (level.maxTicks() <= 0) {
+            throw new InvalidConfigException("Max ticks must be positive, got: " + level.maxTicks());
+        }
+        if (level.spawnJitterTicks() == null) {
+            throw new InvalidConfigException("Level configuration is missing required 'spawnJitterTicks'");
+        }
+        if (level.spawnJitterTicks() <= 0) {
+            throw new InvalidConfigException("Spawn jitter ticks must be positive, got: " + level.spawnJitterTicks());
         }
 
         // Check for contradictory path representations
