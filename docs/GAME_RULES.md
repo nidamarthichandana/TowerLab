@@ -164,12 +164,12 @@ All effects are implemented behind a `StatusEffect` abstraction with configurabl
 - **GR-45 [MVP]** Averages per run: damage dealt, enemies defeated, enemy leakage (enemies reaching the destination), remaining base health, game duration in ticks.
 - **GR-46 [MVP]** Tower damage contribution = damage by tower type ÷ total damage.
 - **GR-47 [MVP]** Tower cost efficiency = total damage by tower type ÷ gold spent on that type (purchases and upgrades).
-- **GR-48 [MVP]** Tower utilization = ticks in which the tower fired ÷ ticks it was on the map.
+- **GR-48 [MVP]** Tower utilization = shots taken ÷ maximum possible shots, capped at 1.0. A shot is any tick in which the tower produced at least one TowerFired or TowerMissed event, so a Cannon blast that damages several enemies on one tick counts as one shot. Maximum possible shots = ceil(ticks on map ÷ cooldown ticks), where ticks on map runs from the tower's TowerBuilt tick to the end of the simulation. Across a batch of runs, utilization per tower type is pooled: total shots ÷ total maximum possible shots.
 
 ## 15. Balance Analysis (rule-based)
 
 - **GR-49 [MVP]** *Overpowered tower:* cost efficiency above 1.5× the median across tower types.
-- **GR-50 [MVP]** *Underused tower:* utilization below 20%.
+- **GR-50 [MVP]** *Underused tower:* the pooled utilization of a tower type (GR-48) is below 20%.
 - **GR-51 [MVP]** *Unbalanced configuration:* win rate above 90% or below 10%.
 - **GR-52 [Stretch]** *Disproportionate enemy:* one enemy type causes over 50% of leakage damage.
 - **GR-53 [MVP]** Each finding includes the rule, the metric value and a short suggested action.
