@@ -2,6 +2,7 @@ package com.towerlab.engine.model;
 
 import com.towerlab.engine.config.EnemyConfig;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -15,7 +16,7 @@ import java.util.Map;
  */
 public abstract class Enemy implements Damageable {
 
-    private final String id;
+    private final int id;
     private final EnemyConfig config;
     private final int maxHealth;
     private int health;
@@ -26,12 +27,12 @@ public abstract class Enemy implements Damageable {
     /**
      * Constructs an Enemy from an id and EnemyConfig.
      *
-     * @param id     unique identifier for the enemy instance
+     * @param id     unique numeric identifier for the enemy instance
      * @param config enemy configuration parameters
      */
-    public Enemy(String id, EnemyConfig config) {
-        if (id == null || id.isBlank()) {
-            throw new IllegalArgumentException("Enemy id cannot be null or blank");
+    public Enemy(int id, EnemyConfig config) {
+        if (id < 0) {
+            throw new IllegalArgumentException("Enemy id cannot be negative, got: " + id);
         }
         if (config == null) {
             throw new IllegalArgumentException("EnemyConfig cannot be null");
@@ -42,7 +43,7 @@ public abstract class Enemy implements Damageable {
         if (config.speed() <= 0.0) {
             throw new IllegalArgumentException("Enemy speed must be positive, got: " + config.speed());
         }
-        this.id = id.trim();
+        this.id = id;
         this.config = config;
         this.maxHealth = (int) Math.round(config.health());
         this.health = this.maxHealth;
@@ -51,7 +52,7 @@ public abstract class Enemy implements Damageable {
         this.activeEffects = new LinkedHashMap<>();
     }
 
-    public String id() {
+    public int id() {
         return id;
     }
 
@@ -88,11 +89,15 @@ public abstract class Enemy implements Damageable {
         return this.progress >= path.totalLength();
     }
 
-    public ContinuousPosition position(Path path) {
+    public ContinuousPosition positionOn(Path path) {
         if (path == null) {
             throw new IllegalArgumentException("Path cannot be null");
         }
         return path.pointAt(progress);
+    }
+
+    public ContinuousPosition position(Path path) {
+        return positionOn(path);
     }
 
     @Override
@@ -151,12 +156,15 @@ public abstract class Enemy implements Damageable {
 
     /**
      * Ticks active status effects, applying burn damage and removing expired effects.
+     *
+     * @return list of damage events inflicted by status effects during this tick
      */
-    public void tickEffects() {
+    public List<EffectDamage> tickEffects() {
         if (!isAlive()) {
-            return;
+            return List.of();
         }
 
+        List<EffectDamage> damages = new ArrayList<>();
         Iterator<Map.Entry<Class<? extends StatusEffect>, StatusEffect>> iterator = activeEffects.entrySet().iterator();
         while (iterator.hasNext()) {
             StatusEffect effect = iterator.next().getValue();
@@ -164,13 +172,15 @@ public abstract class Enemy implements Damageable {
             if (effect instanceof BurnEffect burn) {
                 int damage = burn.consumeDamage();
                 if (damage > 0 && isAlive()) {
-                    takeTrueDamage(damage);
+                    int damageDealt = takeTrueDamage(damage);
+                    damages.add(new EffectDamage(burn.sourceTowerId(), damageDealt));
                 }
             }
             if (effect.isExpired()) {
                 iterator.remove();
             }
         }
+        return List.copyOf(damages);
     }
 
     /**

@@ -9,6 +9,8 @@
     "targets": "GROUND",
     "upgradeCost": 40,
     "splashRadius": 1.0,
+    "slowFraction": 0.0,
+    "slowDurationTicks": 0,
     "special": "Splash: enemies within 1.0 cells of the target take full damage"
   },
   {
@@ -21,6 +23,8 @@
     "targets": "BOTH",
     "upgradeCost": 60,
     "splashRadius": 0.0,
+    "slowFraction": 0.0,
+    "slowDurationTicks": 0,
     "special": "High single-target damage with extended range"
   },
   {
@@ -33,6 +37,8 @@
     "targets": "BOTH",
     "upgradeCost": 35,
     "splashRadius": 0.0,
+    "slowFraction": 0.50,
+    "slowDurationTicks": 30,
     "special": "Slow 50% for 30 ticks"
   },
   {
@@ -45,6 +51,8 @@
     "targets": "BOTH",
     "upgradeCost": 50,
     "splashRadius": 0.0,
+    "slowFraction": 0.0,
+    "slowDurationTicks": 0,
     "special": "Very high attack speed against fast targets"
   }
 ]

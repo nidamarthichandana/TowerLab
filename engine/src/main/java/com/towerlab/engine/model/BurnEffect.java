@@ -3,7 +3,8 @@ package com.towerlab.engine.model;
 /**
  * Implements Burn status effect per GR-22:
  * Deals periodic true damage at configurable intervals over a duration.
- * Reapplying refreshes duration without stacking.
+ * Reapplying refreshes duration without stacking or resetting the interval.
+ * Requires explicit configuration for source tower ID, damage, interval, and duration.
  */
 public class BurnEffect extends StatusEffect {
 
@@ -13,14 +14,15 @@ public class BurnEffect extends StatusEffect {
     private int pendingDamage;
 
     /**
-     * Constructs a BurnEffect with configurable damage, interval, and duration.
+     * Constructs a BurnEffect with explicit source tower id, damage, interval, and duration.
      *
+     * @param sourceTowerId identifier of the tower inflicting the burn
      * @param damage        true damage dealt per interval (must be positive)
      * @param intervalTicks interval in ticks between damage procs (must be positive)
      * @param durationTicks total duration in ticks (must be positive)
      */
-    public BurnEffect(int damage, int intervalTicks, int durationTicks) {
-        super(damage, durationTicks);
+    public BurnEffect(int sourceTowerId, int damage, int intervalTicks, int durationTicks) {
+        super(sourceTowerId, damage, durationTicks);
         if (damage <= 0) {
             throw new IllegalArgumentException("Burn damage must be positive, got: " + damage);
         }
@@ -31,23 +33,6 @@ public class BurnEffect extends StatusEffect {
         this.intervalTicks = intervalTicks;
         this.ticksSinceLastDamage = 0;
         this.pendingDamage = 0;
-    }
-
-    /**
-     * Constructs a BurnEffect with default interval of 5 ticks (per GR-22).
-     *
-     * @param damage        true damage dealt per interval
-     * @param durationTicks total duration in ticks
-     */
-    public BurnEffect(int damage, int durationTicks) {
-        this(damage, 5, durationTicks);
-    }
-
-    /**
-     * Constructs standard MVP BurnEffect: 1 damage every 5 ticks for 40 ticks (per GR-22).
-     */
-    public BurnEffect() {
-        this(1, 5, 40);
     }
 
     public int damage() {

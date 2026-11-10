@@ -4,19 +4,21 @@ package com.towerlab.engine.model;
  * Implements Slow status effect per GR-21:
  * Reduces movement speed by a fraction for a duration.
  * Effects do not stack: a stronger slow replaces a weaker one, and reapplying refreshes duration.
+ * Requires explicit source tower ID for attribution.
  */
 public class SlowEffect extends StatusEffect {
 
     private final double slowFraction;
 
     /**
-     * Constructs a SlowEffect.
+     * Constructs a SlowEffect with an explicit source tower id.
      *
+     * @param sourceTowerId identifier of the tower inflicting the slow
      * @param slowFraction  fractional speed reduction in (0.0, 1.0), e.g. 0.50 for 50% slow
      * @param durationTicks duration in ticks (must be positive)
      */
-    public SlowEffect(double slowFraction, int durationTicks) {
-        super(slowFraction, durationTicks);
+    public SlowEffect(int sourceTowerId, double slowFraction, int durationTicks) {
+        super(sourceTowerId, slowFraction, durationTicks);
         if (slowFraction <= 0.0 || slowFraction >= 1.0) {
             throw new IllegalArgumentException("Slow fraction must be in range (0.0, 1.0), got: " + slowFraction);
         }

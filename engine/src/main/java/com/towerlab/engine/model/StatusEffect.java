@@ -2,26 +2,39 @@ package com.towerlab.engine.model;
 
 /**
  * Base abstract class for temporary status effects applied to entities.
+ * Requires an explicit source tower ID for attribution.
  */
 public abstract class StatusEffect {
 
+    private final int sourceTowerId;
     protected int remainingTicks;
     protected final int durationTicks;
     protected final double magnitude;
 
     /**
-     * Constructs a StatusEffect.
+     * Constructs a StatusEffect with an explicit source tower ID.
      *
+     * @param sourceTowerId identifier of the tower that inflicted the effect
      * @param magnitude     strength of the effect
      * @param durationTicks total duration in ticks (must be positive)
      */
-    public StatusEffect(double magnitude, int durationTicks) {
+    public StatusEffect(int sourceTowerId, double magnitude, int durationTicks) {
         if (durationTicks <= 0) {
             throw new IllegalArgumentException("Status effect duration must be positive, got: " + durationTicks);
         }
+        this.sourceTowerId = sourceTowerId;
         this.magnitude = magnitude;
         this.durationTicks = durationTicks;
         this.remainingTicks = durationTicks;
+    }
+
+    /**
+     * Returns the identifier of the tower that inflicted this effect.
+     *
+     * @return source tower id
+     */
+    public int sourceTowerId() {
+        return sourceTowerId;
     }
 
     /**

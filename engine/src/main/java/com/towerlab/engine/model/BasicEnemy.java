@@ -7,11 +7,11 @@ import com.towerlab.engine.config.EnemyConfig;
  */
 public class BasicEnemy extends Enemy {
 
-    public BasicEnemy(String id, EnemyConfig config) {
+    public BasicEnemy(int id, EnemyConfig config) {
         super(id, config);
     }
 
-    public BasicEnemy(String id) {
+    public BasicEnemy(int id) {
         this(id, new EnemyConfig("Basic", 40.0, 0.05, 8, 1));
     }
 }

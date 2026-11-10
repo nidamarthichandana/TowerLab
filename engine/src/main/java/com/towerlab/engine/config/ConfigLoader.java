@@ -165,7 +165,8 @@ public class ConfigLoader {
                     TowerConfig config = objectMapper.treeToValue(entry.getValue(), TowerConfig.class);
                     String type = config.type() != null && !config.type().isBlank() ? config.type() : entry.getKey();
                     TowerConfig normalized = new TowerConfig(type, config.tier(), config.cost(), config.range(), config.damage(),
-                            config.cooldown(), config.targets(), config.upgradeCost(), config.splashRadius(), config.special());
+                            config.cooldown(), config.targets(), config.upgradeCost(), config.splashRadius(),
+                            config.slowFraction(), config.slowDurationTicks(), config.special());
                     towers.put(type, normalized);
                 }
             } else {
@@ -295,11 +296,23 @@ public class ConfigLoader {
             if (tower.cooldown() <= 0) {
                 throw new InvalidConfigException("Tower '" + tower.type() + "' must have positive cooldown ticks, got: " + tower.cooldown());
             }
+            if (tower.targets() == null) {
+                throw new InvalidConfigException("Tower '" + tower.type() + "' target capability must not be null");
+            }
             if (tower.upgradeCost() < 0) {
                 throw new InvalidConfigException("Tower '" + tower.type() + "' upgrade cost cannot be negative, got: " + tower.upgradeCost());
             }
             if (tower.splashRadius() < 0.0) {
                 throw new InvalidConfigException("Tower '" + tower.type() + "' splash radius cannot be negative, got: " + tower.splashRadius());
+            }
+            if (tower.slowFraction() < 0.0 || tower.slowFraction() >= 1.0) {
+                throw new InvalidConfigException("Tower '" + tower.type() + "' slow fraction must be in range [0.0, 1.0), got: " + tower.slowFraction());
+            }
+            if (tower.slowDurationTicks() < 0) {
+                throw new InvalidConfigException("Tower '" + tower.type() + "' slow duration ticks cannot be negative, got: " + tower.slowDurationTicks());
+            }
+            if (tower.slowFraction() > 0.0 && tower.slowDurationTicks() <= 0) {
+                throw new InvalidConfigException("Tower '" + tower.type() + "' with slow fraction must have positive slow duration ticks, got: " + tower.slowDurationTicks());
             }
         }
     }

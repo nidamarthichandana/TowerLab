@@ -7,11 +7,11 @@ import com.towerlab.engine.config.EnemyConfig;
  */
 public class FastEnemy extends Enemy {
 
-    public FastEnemy(String id, EnemyConfig config) {
+    public FastEnemy(int id, EnemyConfig config) {
         super(id, config);
     }
 
-    public FastEnemy(String id) {
+    public FastEnemy(int id) {
         this(id, new EnemyConfig("Fast", "MVP", 25.0, 0.10, 0.0, 7, 1, 0.20));
     }
 

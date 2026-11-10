@@ -50,9 +50,16 @@ class ConfigLoaderTest {
         assertEquals(12.0, cannon.damage());
         assertEquals(12, cannon.cooldown());
         assertEquals(40, cannon.upgradeCost());
+        assertEquals(TargetType.GROUND, cannon.targets());
+
+        TowerConfig sniper = config.towers().get("Sniper");
+        assertEquals(TargetType.BOTH, sniper.targets());
 
         TowerConfig frost = config.towers().get("Frost");
         assertEquals(35, frost.upgradeCost(), "Frost upgrade cost must be 35 per GR-25");
+        assertEquals(0.50, frost.slowFraction(), 1e-6);
+        assertEquals(30, frost.slowDurationTicks());
+        assertEquals(TargetType.BOTH, frost.targets());
 
         // Verify Stretch towers
         assertTrue(config.towers().containsKey("Rapid"));
@@ -160,6 +167,12 @@ class ConfigLoaderTest {
         InvalidConfigException ex4 = assertThrows(InvalidConfigException.class, () ->
                 loader.validateTowers(Map.of("NegativeCooldown", negativeCooldown)));
         assertTrue(ex4.getMessage().contains("positive cooldown"));
+
+        TowerConfig invalidSlow = new TowerConfig("BadSlow", "MVP", 50, 2.0, 3.0, 15, "BOTH", 35, 0.0, 1.5, 30, null);
+        assertThrows(InvalidConfigException.class, () -> loader.validateTowers(Map.of("BadSlow", invalidSlow)));
+
+        TowerConfig invalidSlowTicks = new TowerConfig("BadSlowTicks", "MVP", 50, 2.0, 3.0, 15, "BOTH", 35, 0.0, 0.5, 0, null);
+        assertThrows(InvalidConfigException.class, () -> loader.validateTowers(Map.of("BadSlowTicks", invalidSlowTicks)));
     }
 
     @Test
@@ -375,5 +388,17 @@ class ConfigLoaderTest {
                 List.of(new WaveConfig(List.of(new SpawnGroupConfig("Basic", 5, 10, 0))))
         );
         assertThrows(InvalidConfigException.class, () -> loader.validateLevel(invalidHeight));
+    }
+
+    @Test
+    @DisplayName("Validation fails when tower specifies an invalid target capability")
+    void testInvalidTargetTypeRejected(@TempDir Path tempDir) throws IOException {
+        String badTowersJson = """
+                [
+                  {"type": "Laser", "tier": "MVP", "cost": 50, "range": 2.0, "damage": 10.0, "cooldown": 10, "targets": "SPACE"}
+                ]
+                """;
+        Files.writeString(tempDir.resolve("towers.json"), badTowersJson);
+        assertThrows(InvalidConfigException.class, () -> loader.loadTowers(tempDir.resolve("towers.json")));
     }
 }
