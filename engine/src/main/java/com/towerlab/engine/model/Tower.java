@@ -1,6 +1,7 @@
 package com.towerlab.engine.model;
 
 import com.towerlab.engine.config.TowerConfig;
+import com.towerlab.engine.strategy.TargetCandidate;
 import com.towerlab.engine.strategy.TargetingStrategy;
 
 import java.util.ArrayList;
@@ -169,21 +170,23 @@ public abstract class Tower {
             return AttackResult.none(id);
         }
 
-        List<Enemy> candidates = new ArrayList<>();
+        List<TargetCandidate> candidates = new ArrayList<>();
         for (Enemy enemy : allEnemies) {
             if (enemy != null && enemy.isAlive() && !enemy.hasReachedEnd(path) && canTarget(enemy)) {
-                if (distanceTo(enemy, path) <= config.range()) {
-                    candidates.add(enemy);
+                ContinuousPosition enemyPos = enemy.positionOn(path);
+                double distance = Math.hypot(this.position.x() - enemyPos.x(), this.position.y() - enemyPos.y());
+                if (distance <= config.range()) {
+                    candidates.add(new TargetCandidate(enemy, enemyPos, distance));
                 }
             }
         }
 
-        Optional<Enemy> targetOpt = strategy.selectTarget(this, candidates);
+        Optional<TargetCandidate> targetOpt = strategy.selectTarget(this, candidates);
         if (targetOpt.isEmpty()) {
             return AttackResult.none(id);
         }
 
-        Enemy target = targetOpt.get();
+        Enemy target = targetOpt.get().enemy();
         List<HitResult> hits = resolveAttack(target, allEnemies, path, rng);
         this.cooldownLeft = config.cooldown();
         return new AttackResult(id, true, hits);

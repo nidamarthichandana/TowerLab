@@ -3,6 +3,7 @@ package com.towerlab.engine.model;
 import com.towerlab.engine.config.EnemyConfig;
 import com.towerlab.engine.config.TargetType;
 import com.towerlab.engine.config.TowerConfig;
+import com.towerlab.engine.strategy.TargetCandidate;
 import com.towerlab.engine.strategy.TargetingStrategy;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -573,7 +574,7 @@ class TowerTest {
 
         // Test tiebreaker in targeting strategy using lowest numeric ID
         TargetingStrategy tieBreakStrategy = (t, candidates) ->
-                candidates.stream().min(Comparator.comparingInt(Enemy::id));
+                candidates.stream().min(Comparator.comparingInt(c -> c.enemy().id()));
         CannonTower tieCannon = new CannonTower(2, megaCannon, new Position(0, 0), tieBreakStrategy);
         // Provide enemies with IDs 10 and 2
         FastEnemy e10 = new FastEnemy(10);
@@ -582,9 +583,11 @@ class TowerTest {
             e10.advance(straightPath);
             e2.advance(straightPath);
         }
-        Optional<Enemy> chosen = tieBreakStrategy.selectTarget(tieCannon, List.of(e10, e2));
+        TargetCandidate c10 = new TargetCandidate(e10, e10.positionOn(straightPath), tieCannon.distanceTo(e10, straightPath));
+        TargetCandidate c2 = new TargetCandidate(e2, e2.positionOn(straightPath), tieCannon.distanceTo(e2, straightPath));
+        Optional<TargetCandidate> chosen = tieBreakStrategy.selectTarget(tieCannon, List.of(c10, c2));
         assertTrue(chosen.isPresent());
-        assertEquals(2, chosen.get().id(), "Tied candidates must be resolved to lowest numeric ID (2 over 10)");
+        assertEquals(2, chosen.get().enemy().id(), "Tied candidates must be resolved to lowest numeric ID (2 over 10)");
     }
 
     @Test
