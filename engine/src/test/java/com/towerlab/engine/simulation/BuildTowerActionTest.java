@@ -16,6 +16,7 @@ import com.towerlab.engine.model.GameStatus;
 import com.towerlab.engine.model.Position;
 import com.towerlab.engine.model.Tower;
 import com.towerlab.engine.strategy.TargetingMode;
+import com.towerlab.engine.test.TestConfigHelper;
 import com.towerlab.engine.test.TestLevelHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -52,12 +53,7 @@ class BuildTowerActionTest {
         gameMap = new GameMap(levelConfig);
         gameState = new GameState(gameMap, levelConfig);
 
-        Map<String, TowerConfig> towerConfigs = Map.of(
-                "Cannon", new TowerConfig("Cannon", "MVP", 60, 2.5, 12.0, 12, "GROUND", 40, 1.0, 0.0, 0, null),
-                "Sniper", new TowerConfig("Sniper", "MVP", 90, 5.0, 40.0, 40, "BOTH", 60, 0.0, 0.0, 0, null),
-                "Frost", new TowerConfig("Frost", "MVP", 50, 2.0, 3.0, 15, "BOTH", 35, 0.0, 0.50, 30, null)
-        );
-        towerFactory = new TowerFactory(towerConfigs);
+        towerFactory = new TowerFactory(TestConfigHelper.getFrozenTowers());
 
         eventBus = new EventBus();
         eventLog = new EventLog();

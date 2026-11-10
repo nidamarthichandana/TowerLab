@@ -10,8 +10,4 @@ public class BasicEnemy extends Enemy {
     public BasicEnemy(int id, EnemyConfig config) {
         super(id, config);
     }
-
-    public BasicEnemy(int id) {
-        this(id, new EnemyConfig("Basic", 40.0, 0.05, 8, 1));
-    }
 }

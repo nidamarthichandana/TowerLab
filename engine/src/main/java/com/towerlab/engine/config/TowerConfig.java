@@ -41,34 +41,6 @@ public record TowerConfig(
         }
     }
 
-    public TowerConfig(String type, int cost, double range, double damage, int cooldown) {
-        this(type, "MVP", cost, range, damage, cooldown, TargetType.GROUND, 0, 0.0, 0.0, 0, null);
-    }
-
-    public TowerConfig(String type, String tier, int cost, double range, double damage, int cooldown) {
-        this(type, tier, cost, range, damage, cooldown, TargetType.GROUND, 0, 0.0, 0.0, 0, null);
-    }
-
-    public TowerConfig(String type, String tier, int cost, double range, double damage, int cooldown,
-                       TargetType targets, int upgradeCost, double splashRadius, String special) {
-        this(type, tier, cost, range, damage, cooldown, targets, upgradeCost, splashRadius, 0.0, 0, special);
-    }
-
-    public TowerConfig(String type, String tier, int cost, double range, double damage, int cooldown,
-                       String targets, int upgradeCost, double splashRadius, String special) {
-        this(type, tier, cost, range, damage, cooldown,
-                targets == null ? TargetType.GROUND : TargetType.fromString(targets),
-                upgradeCost, splashRadius, 0.0, 0, special);
-    }
-
-    public TowerConfig(String type, String tier, int cost, double range, double damage, int cooldown,
-                       String targets, int upgradeCost, double splashRadius, double slowFraction,
-                       int slowDurationTicks, String special) {
-        this(type, tier, cost, range, damage, cooldown,
-                targets == null ? TargetType.GROUND : TargetType.fromString(targets),
-                upgradeCost, splashRadius, slowFraction, slowDurationTicks, special);
-    }
-
     public boolean isMvp() {
         return "MVP".equalsIgnoreCase(tier);
     }

@@ -5,6 +5,7 @@ import com.towerlab.engine.config.TargetType;
 import com.towerlab.engine.config.TowerConfig;
 import com.towerlab.engine.strategy.TargetCandidate;
 import com.towerlab.engine.strategy.TargetingStrategy;
+import com.towerlab.engine.test.TestConfigHelper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -38,20 +39,9 @@ class TowerTest {
     // Stub strategy selecting no candidate
     private final TargetingStrategy emptyStrategy = (tower, candidates) -> Optional.empty();
 
-    private final TowerConfig cannonConfig = new TowerConfig(
-            "Cannon", "MVP", 60, 2.5, 12.0, 12, TargetType.GROUND, 40, 1.0, 0.0, 0,
-            "Splash: enemies within 1.0 cells of the target take full damage"
-    );
-
-    private final TowerConfig sniperConfig = new TowerConfig(
-            "Sniper", "MVP", 90, 5.0, 40.0, 40, TargetType.BOTH, 60, 0.0, 0.0, 0,
-            "High single-target damage with extended range"
-    );
-
-    private final TowerConfig frostConfig = new TowerConfig(
-            "Frost", "MVP", 50, 2.0, 3.0, 15, TargetType.BOTH, 35, 0.0, 0.50, 30,
-            "Slow 50% for 30 ticks"
-    );
+    private final TowerConfig cannonConfig = TestConfigHelper.getFrozenTowerConfig("Cannon");
+    private final TowerConfig sniperConfig = TestConfigHelper.getFrozenTowerConfig("Sniper");
+    private final TowerConfig frostConfig = TestConfigHelper.getFrozenTowerConfig("Frost");
 
     @Test
     @DisplayName("Verify construction values for Cannon, Sniper, and Frost towers")
@@ -100,7 +90,7 @@ class TowerTest {
         RandomGenerator rng = new SplittableRandom(1);
 
         for (int tick = 0; tick <= 25; tick++) {
-            BasicEnemy target = new BasicEnemy(tick);
+            BasicEnemy target = TestConfigHelper.createBasicEnemy(tick);
             for (int i = 0; i < 20; i++) {
                 target.advance(straightPath); // pos (1.0, 0.0)
             }
@@ -126,7 +116,7 @@ class TowerTest {
         CannonTower cannon = new CannonTower(1, cannonConfig, new Position(0, 0), firstCandidateStrategy);
         RandomGenerator rng = new SplittableRandom(1);
 
-        BasicEnemy distantEnemy = new BasicEnemy(100);
+        BasicEnemy distantEnemy = TestConfigHelper.createBasicEnemy(100);
         for (int i = 0; i < 200; i++) {
             distantEnemy.advance(straightPath); // pos (10.0, 0.0)
         }
@@ -139,7 +129,7 @@ class TowerTest {
         }
 
         // Tick 3: enemy enters range at pos (2.0, 0.0) <= 2.5
-        BasicEnemy inRangeEnemy = new BasicEnemy(101);
+        BasicEnemy inRangeEnemy = TestConfigHelper.createBasicEnemy(101);
         for (int i = 0; i < 40; i++) {
             inRangeEnemy.advance(straightPath);
         }
@@ -165,7 +155,7 @@ class TowerTest {
             }
         };
 
-        FastEnemy fast = new FastEnemy(1); // 20% evasion
+        FastEnemy fast = TestConfigHelper.createFastEnemy(1); // 20% evasion
         for (int i = 0; i < 10; i++) {
             fast.advance(straightPath); // in range
         }
@@ -194,7 +184,7 @@ class TowerTest {
     void testRangeBoundaryCondition() {
         CannonTower cannon = new CannonTower(1, cannonConfig, new Position(0, 0), firstCandidateStrategy);
 
-        BasicEnemy exactEnemy = new BasicEnemy(1);
+        BasicEnemy exactEnemy = TestConfigHelper.createBasicEnemy(1);
         for (int i = 0; i < 50; i++) {
             exactEnemy.advance(straightPath); // pos 2.50
         }
@@ -220,7 +210,7 @@ class TowerTest {
         SniperTower sniper = new SniperTower(1, sniperConfig, new Position(0, 0), firstCandidateStrategy);
 
         // 1. Deals 40 raw damage to a Basic enemy
-        BasicEnemy basicTarget = new BasicEnemy(1);
+        BasicEnemy basicTarget = TestConfigHelper.createBasicEnemy(1);
         for (int i = 0; i < 20; i++) {
             basicTarget.advance(straightPath); // pos (1.0, 0.0)
         }
@@ -332,7 +322,7 @@ class TowerTest {
     void testFrostTowerDamageAndSlowApplication() {
         FrostTower frost = new FrostTower(1, frostConfig, new Position(0, 0), firstCandidateStrategy);
 
-        BasicEnemy basic = new BasicEnemy(1);
+        BasicEnemy basic = TestConfigHelper.createBasicEnemy(1);
         for (int i = 0; i < 20; i++) {
             basic.advance(straightPath); // pos (1.0, 0.0)
         }
@@ -358,7 +348,7 @@ class TowerTest {
 
         // Fast enemy (20% evasion): fake RNG returns 0.10 (< 0.20 -> evades)
         FrostTower frost2 = new FrostTower(2, frostConfig, new Position(0, 0), firstCandidateStrategy);
-        FastEnemy fast = new FastEnemy(2);
+        FastEnemy fast = TestConfigHelper.createFastEnemy(2);
         for (int i = 0; i < 10; i++) {
             fast.advance(straightPath);
         }
@@ -419,7 +409,7 @@ class TowerTest {
     @DisplayName("Frost armour interaction: 3 raw damage to 40% armour Armored enemy deals round(3 x 0.6) = 2 damage")
     void testFrostArmourInteraction() {
         FrostTower frost = new FrostTower(1, frostConfig, new Position(0, 0), firstCandidateStrategy);
-        ArmoredEnemy armored = new ArmoredEnemy(1); // 40% armour, 120 HP
+        ArmoredEnemy armored = TestConfigHelper.createArmoredEnemy(1); // 40% armour, 120 HP
         for (int i = 0; i < 20; i++) {
             armored.advance(straightPath); // in range
         }
@@ -441,7 +431,7 @@ class TowerTest {
         SniperTower sniper = new SniperTower(1, sniperConfig, new Position(0, 0), firstCandidateStrategy);
 
         // Case 1: Living enemy killed by current attack -> killed = true
-        BasicEnemy livingToKill = new BasicEnemy(1); // 40 HP
+        BasicEnemy livingToKill = TestConfigHelper.createBasicEnemy(1); // 40 HP
         for (int i = 0; i < 20; i++) {
             livingToKill.advance(straightPath);
         }
@@ -451,7 +441,7 @@ class TowerTest {
 
         // Case 2: Surviving enemy -> killed = false
         CannonTower cannon = new CannonTower(2, cannonConfig, new Position(0, 0), firstCandidateStrategy);
-        BasicEnemy surviving = new BasicEnemy(2); // 40 HP, takes 12 damage -> 28 HP remaining
+        BasicEnemy surviving = TestConfigHelper.createBasicEnemy(2); // 40 HP, takes 12 damage -> 28 HP remaining
         for (int i = 0; i < 20; i++) {
             surviving.advance(straightPath);
         }
@@ -459,7 +449,7 @@ class TowerTest {
         assertFalse(resultSurvive.hits().get(0).killed(), "Surviving enemy must have killed = false");
 
         // Case 3: An already-dead enemy cannot be reported as newly killed
-        BasicEnemy deadEnemy = new BasicEnemy(3);
+        BasicEnemy deadEnemy = TestConfigHelper.createBasicEnemy(3);
         deadEnemy.takeDamage(100);
         assertFalse(deadEnemy.isAlive());
 
@@ -480,21 +470,21 @@ class TowerTest {
         CannonTower cannon = new CannonTower(1, cannonConfig, new Position(0, 0), firstCandidateStrategy);
 
         // 1. Dead enemy in range
-        BasicEnemy deadEnemy = new BasicEnemy(1);
+        BasicEnemy deadEnemy = TestConfigHelper.createBasicEnemy(1);
         deadEnemy.takeDamage(100);
         for (int i = 0; i < 20; i++) {
             deadEnemy.advance(straightPath);
         }
 
         // 2. Enemy that has reached the end of path
-        BasicEnemy endEnemy = new BasicEnemy(2);
+        BasicEnemy endEnemy = TestConfigHelper.createBasicEnemy(2);
         for (int i = 0; i < 400; i++) {
             endEnemy.advance(straightPath); // reaches 20.0
         }
         assertTrue(endEnemy.hasReachedEnd(straightPath));
 
         // 3. Enemy far out of range
-        BasicEnemy outOfRangeEnemy = new BasicEnemy(3);
+        BasicEnemy outOfRangeEnemy = TestConfigHelper.createBasicEnemy(3);
         for (int i = 0; i < 200; i++) {
             outOfRangeEnemy.advance(straightPath); // at 10.0 > 2.5
         }
@@ -517,7 +507,7 @@ class TowerTest {
         List<Enemy> enemies = new ArrayList<>();
         int[] ids = {10, 2, 12, 1, 9, 3, 8, 4, 7, 5, 11, 6}; // Shuffled IDs including 2 and 10
         for (int id : ids) {
-            FastEnemy enemy = new FastEnemy(id);
+            FastEnemy enemy = TestConfigHelper.createFastEnemy(id);
             for (int i = 0; i < 20; i++) {
                 enemy.advance(straightPath); // all at pos (1.0, 0.0), well within splash
             }
@@ -577,8 +567,8 @@ class TowerTest {
                 candidates.stream().min(Comparator.comparingInt(c -> c.enemy().id()));
         CannonTower tieCannon = new CannonTower(2, megaCannon, new Position(0, 0), tieBreakStrategy);
         // Provide enemies with IDs 10 and 2
-        FastEnemy e10 = new FastEnemy(10);
-        FastEnemy e2 = new FastEnemy(2);
+        FastEnemy e10 = TestConfigHelper.createFastEnemy(10);
+        FastEnemy e2 = TestConfigHelper.createFastEnemy(2);
         for (int i = 0; i < 20; i++) {
             e10.advance(straightPath);
             e2.advance(straightPath);
@@ -594,7 +584,7 @@ class TowerTest {
     @DisplayName("Randomness: RNG is NOT consumed for enemies whose evasionChance is 0")
     void testRngNotConsumedWhenEvasionChanceZero() {
         SniperTower sniper = new SniperTower(1, sniperConfig, new Position(0, 0), firstCandidateStrategy);
-        BasicEnemy basic = new BasicEnemy(1); // evasionChance = 0.0
+        BasicEnemy basic = TestConfigHelper.createBasicEnemy(1); // evasionChance = 0.0
         for (int i = 0; i < 20; i++) {
             basic.advance(straightPath);
         }
@@ -625,7 +615,7 @@ class TowerTest {
         assertThrows(UnsupportedOperationException.class, () -> none.hits().add(new HitResult(1, 10, false, false, false)));
 
         CannonTower cannon = new CannonTower(1, cannonConfig, new Position(0, 0), firstCandidateStrategy);
-        BasicEnemy target = new BasicEnemy(1);
+        BasicEnemy target = TestConfigHelper.createBasicEnemy(1);
         for (int i = 0; i < 20; i++) {
             target.advance(straightPath);
         }
@@ -636,8 +626,8 @@ class TowerTest {
     @Test
     @DisplayName("Strategy reassignment: changeStrategy() takes effect on the very next update() call")
     void testStrategyReassignmentTakesEffect() {
-        BasicEnemy e1 = new BasicEnemy(1);
-        BasicEnemy e2 = new BasicEnemy(2);
+        BasicEnemy e1 = TestConfigHelper.createBasicEnemy(1);
+        BasicEnemy e2 = TestConfigHelper.createBasicEnemy(2);
         for (int i = 0; i < 20; i++) {
             e1.advance(straightPath);
             e2.advance(straightPath);

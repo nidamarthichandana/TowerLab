@@ -10,6 +10,7 @@ import com.towerlab.engine.exception.InsufficientFundsException;
 import com.towerlab.engine.exception.InvalidActionException;
 import com.towerlab.engine.exception.InvalidPlacementException;
 import com.towerlab.engine.strategy.TargetingMode;
+import com.towerlab.engine.test.TestConfigHelper;
 import com.towerlab.engine.test.TestLevelHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -124,7 +125,7 @@ class GameStateTest {
         CannonTower tower = new CannonTower(1, cannonConfig, new Position(0, 0), TargetingMode.FIRST.strategy());
         state.addTower(tower);
 
-        BasicEnemy enemy = new BasicEnemy(1);
+        BasicEnemy enemy = TestConfigHelper.createBasicEnemy(1);
         state.addEnemy(enemy);
 
         List<Tower> towersList = state.towers();
@@ -134,7 +135,7 @@ class GameStateTest {
         assertThrows(UnsupportedOperationException.class, () -> enemiesList.remove(0));
 
         // Adding another entity to state creates fresh snapshots
-        BasicEnemy enemy2 = new BasicEnemy(2);
+        BasicEnemy enemy2 = TestConfigHelper.createBasicEnemy(2);
         state.addEnemy(enemy2);
         assertEquals(1, enemiesList.size(), "Original snapshot must remain unchanged");
         assertEquals(2, state.enemies().size(), "New query reflects updated state");
@@ -196,8 +197,8 @@ class GameStateTest {
     @Test
     @DisplayName("removeEnemy removes the enemy by ID")
     void testRemoveEnemy() {
-        BasicEnemy e1 = new BasicEnemy(10);
-        BasicEnemy e2 = new BasicEnemy(20);
+        BasicEnemy e1 = TestConfigHelper.createBasicEnemy(10);
+        BasicEnemy e2 = TestConfigHelper.createBasicEnemy(20);
         state.addEnemy(e1);
         state.addEnemy(e2);
         assertEquals(2, state.enemies().size());
@@ -280,5 +281,98 @@ class GameStateTest {
         assertThrows(IllegalArgumentException.class, () -> state.addTower(null));
         assertThrows(IllegalArgumentException.class, () -> state.changeStatus(null));
         assertThrows(IllegalArgumentException.class, () -> state.towerAt(null));
+    }
+
+    @Test
+    @DisplayName("1. spendGold rejects negative amounts")
+    void testSpendGoldRejectsNegativeAmounts() {
+        assertThrows(IllegalArgumentException.class, () -> state.spendGold(-1));
+        assertThrows(IllegalArgumentException.class, () -> state.spendGold(-100));
+        assertEquals(150, state.gold(), "Gold must remain unchanged after rejected spendGold");
+    }
+
+    @Test
+    @DisplayName("2. spendGold rejects zero amounts")
+    void testSpendGoldRejectsZeroAmounts() {
+        assertThrows(IllegalArgumentException.class, () -> state.spendGold(0));
+        assertEquals(150, state.gold(), "Gold must remain unchanged after rejected spendGold");
+    }
+
+    @Test
+    @DisplayName("3. addGold rejects negative amounts")
+    void testAddGoldRejectsNegativeAmounts() {
+        assertThrows(IllegalArgumentException.class, () -> state.addGold(-1));
+        assertThrows(IllegalArgumentException.class, () -> state.addGold(-50));
+        assertEquals(150, state.gold(), "Gold must remain unchanged after rejected addGold");
+    }
+
+    @Test
+    @DisplayName("4. addGold rejects zero amounts")
+    void testAddGoldRejectsZeroAmounts() {
+        assertThrows(IllegalArgumentException.class, () -> state.addGold(0));
+        assertEquals(150, state.gold(), "Gold must remain unchanged after rejected addGold");
+    }
+
+    @Test
+    @DisplayName("5. damageBase rejects negative amounts")
+    void testDamageBaseRejectsNegativeAmounts() {
+        assertThrows(IllegalArgumentException.class, () -> state.damageBase(-1));
+        assertThrows(IllegalArgumentException.class, () -> state.damageBase(-10));
+        assertEquals(20, state.baseHealth(), "Base health must remain unchanged after rejected damageBase");
+    }
+
+    @Test
+    @DisplayName("6. damageBase rejects zero amounts")
+    void testDamageBaseRejectsZeroAmounts() {
+        assertThrows(IllegalArgumentException.class, () -> state.damageBase(0));
+        assertEquals(20, state.baseHealth(), "Base health must remain unchanged after rejected damageBase");
+    }
+
+    @Test
+    @DisplayName("7. Duplicate tower IDs are rejected without corrupting existing state")
+    void testDuplicateTowerIdRejectedWithoutCorruptingExistingState() {
+        Position pos1 = new Position(0, 0);
+        Position pos2 = new Position(2, 2);
+
+        CannonTower tower1 = new CannonTower(10, cannonConfig, pos1, TargetingMode.FIRST.strategy());
+        state.addTower(tower1);
+        assertEquals(1, state.towers().size());
+        assertEquals(tower1, state.tower(10).orElse(null));
+
+        // Attempt to place another tower with duplicate ID 10 at pos2
+        CannonTower duplicateIdTower = new CannonTower(10, cannonConfig, pos2, TargetingMode.FIRST.strategy());
+        assertThrows(InvalidPlacementException.class, () -> state.addTower(duplicateIdTower));
+
+        // Verify existing state remains uncorrupted
+        assertEquals(1, state.towers().size(), "Tower count must remain unchanged");
+        assertEquals(tower1, state.tower(10).orElse(null), "Original tower must remain untouched");
+        assertTrue(state.towerAt(pos1).isPresent());
+        assertTrue(state.towerAt(pos2).isEmpty(), "Target cell of rejected tower must remain unoccupied");
+    }
+
+    @Test
+    @DisplayName("8. advanceTick behaves correctly, including expected tick increment and boundary conditions")
+    void testAdvanceTickBehavesCorrectlyIncludingBoundaryConditions() {
+        assertEquals(0, state.tick(), "Initial tick must be 0");
+
+        state.advanceTick();
+        assertEquals(1, state.tick());
+
+        state.advanceTick();
+        assertEquals(2, state.tick());
+
+        // Increment across a large sequence of ticks
+        for (int i = 3; i <= 500; i++) {
+            state.advanceTick();
+            assertEquals(i, state.tick(), "Tick must strictly increment by 1 on each advanceTick call");
+        }
+
+        // Verify advanceTick does not mutate unrelated state
+        assertEquals(150, state.gold());
+        assertEquals(20, state.baseHealth());
+        assertEquals(GameStatus.READY, state.status());
+        assertEquals(0, state.currentWaveNumber());
+        assertTrue(state.enemies().isEmpty());
+        assertTrue(state.towers().isEmpty());
     }
 }

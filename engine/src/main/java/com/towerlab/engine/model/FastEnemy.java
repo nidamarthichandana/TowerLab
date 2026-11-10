@@ -11,10 +11,6 @@ public class FastEnemy extends Enemy {
         super(id, config);
     }
 
-    public FastEnemy(int id) {
-        this(id, new EnemyConfig("Fast", "MVP", 25.0, 0.10, 0.0, 7, 1, 0.20));
-    }
-
     @Override
     public double evasionChance() {
         return config().evasionChance();

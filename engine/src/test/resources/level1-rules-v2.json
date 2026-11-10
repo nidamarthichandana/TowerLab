@@ -1,0 +1,56 @@
+{
+  "name": "Level 1",
+  "width": 12,
+  "height": 8,
+  "startingGold": 150,
+  "startingBaseHealth": 20,
+  "prepPeriodTicks": 100,
+  "waveClearBonus": 20,
+  "maxTicks": 20000,
+  "spawnJitterTicks": 3,
+  "waypoints": [
+    { "x": 0, "y": 1 },
+    { "x": 6, "y": 1 },
+    { "x": 6, "y": 5 },
+    { "x": 10, "y": 5 },
+    { "x": 10, "y": 2 },
+    { "x": 11, "y": 2 }
+  ],
+  "allowedTowers": ["Cannon", "Sniper", "Frost"],
+  "waves": [
+    {
+      "waveNumber": 1,
+      "spawnGroups": [
+        { "enemyType": "Basic", "count": 8, "interval": 20, "startDelay": 0 }
+      ]
+    },
+    {
+      "waveNumber": 2,
+      "spawnGroups": [
+        { "enemyType": "Basic", "count": 10, "interval": 15, "startDelay": 0 },
+        { "enemyType": "Fast", "count": 4, "interval": 25, "startDelay": 100 }
+      ]
+    },
+    {
+      "waveNumber": 3,
+      "spawnGroups": [
+        { "enemyType": "Basic", "count": 10, "interval": 15, "startDelay": 0 },
+        { "enemyType": "Armored", "count": 3, "interval": 60, "startDelay": 0 }
+      ]
+    },
+    {
+      "waveNumber": 4,
+      "spawnGroups": [
+        { "enemyType": "Fast", "count": 12, "interval": 12, "startDelay": 0 },
+        { "enemyType": "Basic", "count": 6, "interval": 18, "startDelay": 60 }
+      ]
+    },
+    {
+      "waveNumber": 5,
+      "spawnGroups": [
+        { "enemyType": "Armored", "count": 6, "interval": 40, "startDelay": 0 },
+        { "enemyType": "Basic", "count": 10, "interval": 12, "startDelay": 0 }
+      ]
+    }
+  ]
+}

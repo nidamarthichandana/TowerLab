@@ -1,6 +1,7 @@
 package com.towerlab.engine.model;
 
 import com.towerlab.engine.config.EnemyConfig;
+import com.towerlab.engine.test.TestConfigHelper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -26,7 +27,7 @@ class EnemyTest {
     @Test
     @DisplayName("Basic enemy has 40 HP per GR-Table 5")
     void testBasicEnemyHas40Hp() {
-        BasicEnemy basic = new BasicEnemy(1);
+        BasicEnemy basic = TestConfigHelper.createBasicEnemy(1);
         assertEquals(1, basic.id());
         assertEquals(40, basic.currentHealth());
         assertEquals(40, basic.maxHealth());
@@ -37,7 +38,7 @@ class EnemyTest {
     @Test
     @DisplayName("Armored enemy takes round(12 x 0.6) = 7 damage with raw damage 12 per GR-18")
     void testArmoredEnemyDamageCalculation() {
-        ArmoredEnemy armored = new ArmoredEnemy(2);
+        ArmoredEnemy armored = TestConfigHelper.createArmoredEnemy(2);
         assertEquals(2, armored.id());
         assertEquals(120, armored.currentHealth());
 
@@ -50,7 +51,7 @@ class EnemyTest {
     @Test
     @DisplayName("Minimum damage is 1 per GR-18")
     void testMinimumDamageIsOne() {
-        ArmoredEnemy armored = new ArmoredEnemy(2);
+        ArmoredEnemy armored = TestConfigHelper.createArmoredEnemy(2);
 
         // Raw damage 1 with 40% armour: round(1 * 0.6) = round(0.6) = 1 (max(1, 1) = 1)
         int damageDealt = armored.takeDamage(1);
@@ -95,7 +96,7 @@ class EnemyTest {
     @Test
     @DisplayName("Already-dead enemy takes 0 damage and 0 true damage")
     void testAlreadyDeadEnemyTakesZeroDamage() {
-        BasicEnemy basic = new BasicEnemy(1);
+        BasicEnemy basic = TestConfigHelper.createBasicEnemy(1);
         basic.takeDamage(100);
         assertEquals(0, basic.currentHealth());
         assertFalse(basic.isAlive());
@@ -108,7 +109,7 @@ class EnemyTest {
     @Test
     @DisplayName("Dead enemy ignores status effects and tickEffects does nothing")
     void testDeadEnemyIgnoresStatusEffectsAndTickEffects() {
-        BasicEnemy basic = new BasicEnemy(1);
+        BasicEnemy basic = TestConfigHelper.createBasicEnemy(1);
         basic.takeTrueDamage(40);
         assertFalse(basic.isAlive());
 
@@ -125,7 +126,7 @@ class EnemyTest {
     @Test
     @DisplayName("Burn ignores armour per GR-18 and deals true damage")
     void testBurnIgnoresArmour() {
-        ArmoredEnemy armored = new ArmoredEnemy(2); // 40% armour
+        ArmoredEnemy armored = TestConfigHelper.createArmoredEnemy(2); // 40% armour
         int trueDamage = armored.takeTrueDamage(10);
         assertEquals(10, trueDamage, "True damage must not be reduced by armour");
         assertEquals(110, armored.currentHealth());
@@ -144,7 +145,7 @@ class EnemyTest {
     @Test
     @DisplayName("Burn deals 1 damage at 5, 10, ..., 40 ticks (8 procs total) and expires after 40 per GR-22")
     void testBurnTimingAndProcCount() {
-        BasicEnemy basic = new BasicEnemy(1); // 40 HP
+        BasicEnemy basic = TestConfigHelper.createBasicEnemy(1); // 40 HP
         basic.applyEffect(new BurnEffect(77, 1, 5, 40));
 
         // Ticks 1 to 4: no damage
@@ -190,7 +191,7 @@ class EnemyTest {
     @Test
     @DisplayName("Burn reapplication refreshes duration to 40 without resetting interval counter or stacking per GR-22")
     void testBurnReapplicationPreservesIntervalPhase() {
-        BasicEnemy basic = new BasicEnemy(1);
+        BasicEnemy basic = TestConfigHelper.createBasicEnemy(1);
         basic.applyEffect(new BurnEffect(10, 1, 5, 40));
 
         // Tick 1 to 5: 1 proc on tick 5 (HP 39)
@@ -225,7 +226,7 @@ class EnemyTest {
     @Test
     @DisplayName("Slow rules per GR-21: weaker slow ignored, equal refreshes duration, stronger replaces")
     void testSlowRulesWeakerIgnoredEqualRefreshesStrongerReplaces() {
-        BasicEnemy basic = new BasicEnemy(1);
+        BasicEnemy basic = TestConfigHelper.createBasicEnemy(1);
 
         // Apply 60% slow for 30 ticks from tower 10
         SlowEffect slow60 = new SlowEffect(10, 0.60, 30);
@@ -272,7 +273,7 @@ class EnemyTest {
     @Test
     @DisplayName("Slow expiry restores full movement speed on the exact tick per GR-21")
     void testSlowExpiryRestoresFullSpeedOnExactTick() {
-        BasicEnemy basic = new BasicEnemy(1); // speed 0.05
+        BasicEnemy basic = TestConfigHelper.createBasicEnemy(1); // speed 0.05
         SlowEffect slow = new SlowEffect(10, 0.50, 2); // 50% slow for 2 ticks
         basic.applyEffect(slow);
 
@@ -298,7 +299,7 @@ class EnemyTest {
     @Test
     @DisplayName("Basic enemy at 0.05 cells/tick covers an 18-cell path in 360 ticks per GR-1 & GR-8")
     void testBasicEnemyTraverses18CellPathIn360Ticks() {
-        BasicEnemy basic = new BasicEnemy(1);
+        BasicEnemy basic = TestConfigHelper.createBasicEnemy(1);
         assertEquals(18.0, examplePath.totalLength(), 1e-6);
 
         assertFalse(basic.hasReachedEnd());
@@ -324,7 +325,7 @@ class EnemyTest {
     @Test
     @DisplayName("Fast enemy has 25 HP, speed 0.10, and 20% evasion chance per GR-Table 5")
     void testFastEnemyAttributes() {
-        FastEnemy fast = new FastEnemy(1);
+        FastEnemy fast = TestConfigHelper.createFastEnemy(1);
         assertEquals(25, fast.currentHealth());
         assertEquals(0.10, fast.config().speed(), 1e-6);
         assertEquals(0.20, fast.evasionChance(), 1e-6);
@@ -334,14 +335,14 @@ class EnemyTest {
     @DisplayName("Invalid state and arguments are rejected")
     void testInvalidStateRejected() {
         // Negative id
-        assertThrows(IllegalArgumentException.class, () -> new BasicEnemy(-1));
+        assertThrows(IllegalArgumentException.class, () -> new BasicEnemy(-1, TestConfigHelper.getFrozenEnemyConfig("Basic")));
 
         // Non-positive health
         EnemyConfig invalidHealth = new EnemyConfig("Bad", -10.0, 0.05, 5, 1);
         assertThrows(IllegalArgumentException.class, () -> new BasicEnemy(1, invalidHealth));
 
         // Non-positive damage
-        BasicEnemy basic = new BasicEnemy(1);
+        BasicEnemy basic = TestConfigHelper.createBasicEnemy(1);
         assertThrows(IllegalArgumentException.class, () -> basic.takeDamage(0));
         assertThrows(IllegalArgumentException.class, () -> basic.takeDamage(-5));
         assertThrows(IllegalArgumentException.class, () -> basic.takeTrueDamage(0));

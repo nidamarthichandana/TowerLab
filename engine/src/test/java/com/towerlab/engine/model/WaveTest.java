@@ -1,7 +1,9 @@
 package com.towerlab.engine.model;
 
+import com.towerlab.engine.config.LevelConfig;
 import com.towerlab.engine.config.SpawnGroupConfig;
 import com.towerlab.engine.config.WaveConfig;
+import com.towerlab.engine.test.TestConfigHelper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -102,5 +104,38 @@ class WaveTest {
         assertThrows(IllegalArgumentException.class, () -> new ScheduledSpawn(0, null));
         assertThrows(IllegalArgumentException.class, () -> new ScheduledSpawn(0, ""));
         assertThrows(IllegalArgumentException.class, () -> new ScheduledSpawn(-1, "Basic"));
+    }
+
+    @Test
+    @DisplayName("Wave 2 Fast enemy nominal spawn ticks from level1.json configuration must be 100, 125, 150, 175")
+    void testWave2FastNominalSpawnTicksFromLevelConfig() {
+        LevelConfig level = TestConfigHelper.getFrozenLevel();
+        Wave wave2 = new Wave(level.waves().get(1)); // 0-based index 1 = Wave 2
+
+        SpawnGroup fastGroup = wave2.groups().stream()
+                .filter(g -> "Fast".equals(g.enemyType()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Wave 2 must contain Fast enemy group"));
+
+        assertEquals(List.of(100, 125, 150, 175), fastGroup.nominalSpawnTicks(),
+                "Wave 2 Fast enemy nominal spawn ticks must be 100, 125, 150, 175 per GR-28");
+    }
+
+    @Test
+    @DisplayName("Wave 2 total enemy count from level1.json configuration must be 14")
+    void testWave2TotalEnemyCountFromLevelConfig() {
+        LevelConfig level = TestConfigHelper.getFrozenLevel();
+        Wave wave2 = new Wave(level.waves().get(1));
+
+        assertEquals(14, wave2.totalEnemies(), "Wave 2 total enemy count must be 14 per GR-28");
+    }
+
+    @Test
+    @DisplayName("Wave 5 total enemy count from level1.json configuration must be 16")
+    void testWave5TotalEnemyCountFromLevelConfig() {
+        LevelConfig level = TestConfigHelper.getFrozenLevel();
+        Wave wave5 = new Wave(level.waves().get(4)); // 0-based index 4 = Wave 5
+
+        assertEquals(16, wave5.totalEnemies(), "Wave 5 total enemy count must be 16 per GR-28");
     }
 }

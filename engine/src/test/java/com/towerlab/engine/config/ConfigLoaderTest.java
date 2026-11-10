@@ -2,6 +2,7 @@ package com.towerlab.engine.config;
 
 import com.towerlab.engine.exception.InvalidConfigException;
 import com.towerlab.engine.model.Position;
+import com.towerlab.engine.test.TestConfigHelper;
 import com.towerlab.engine.test.TestLevelHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -163,30 +164,30 @@ class ConfigLoaderTest {
     @Test
     @DisplayName("Validation fails when tower statistics are non-positive")
     void testInvalidNonPositiveTowerStatistics() {
-        TowerConfig negativeCost = new TowerConfig("BadCost", -10, 2.5, 10.0, 15);
+        TowerConfig negativeCost = new TowerConfig("BadCost", "MVP", -10, 2.5, 10.0, 15, TargetType.GROUND, 0, 0.0, 0.0, 0, null);
         InvalidConfigException ex1 = assertThrows(InvalidConfigException.class, () ->
                 loader.validateTowers(Map.of("BadCost", negativeCost)));
         assertTrue(ex1.getMessage().contains("positive cost"));
 
-        TowerConfig zeroRange = new TowerConfig("ZeroRange", 50, 0.0, 10.0, 15);
+        TowerConfig zeroRange = new TowerConfig("ZeroRange", "MVP", 50, 0.0, 10.0, 15, TargetType.GROUND, 0, 0.0, 0.0, 0, null);
         InvalidConfigException ex2 = assertThrows(InvalidConfigException.class, () ->
                 loader.validateTowers(Map.of("ZeroRange", zeroRange)));
         assertTrue(ex2.getMessage().contains("positive range"));
 
-        TowerConfig zeroDamage = new TowerConfig("ZeroDamage", 50, 2.5, 0.0, 15);
+        TowerConfig zeroDamage = new TowerConfig("ZeroDamage", "MVP", 50, 2.5, 0.0, 15, TargetType.GROUND, 0, 0.0, 0.0, 0, null);
         InvalidConfigException ex3 = assertThrows(InvalidConfigException.class, () ->
                 loader.validateTowers(Map.of("ZeroDamage", zeroDamage)));
         assertTrue(ex3.getMessage().contains("positive damage"));
 
-        TowerConfig negativeCooldown = new TowerConfig("NegativeCooldown", 50, 2.5, 10.0, -5);
+        TowerConfig negativeCooldown = new TowerConfig("NegativeCooldown", "MVP", 50, 2.5, 10.0, -5, TargetType.GROUND, 0, 0.0, 0.0, 0, null);
         InvalidConfigException ex4 = assertThrows(InvalidConfigException.class, () ->
                 loader.validateTowers(Map.of("NegativeCooldown", negativeCooldown)));
         assertTrue(ex4.getMessage().contains("positive cooldown"));
 
-        TowerConfig invalidSlow = new TowerConfig("BadSlow", "MVP", 50, 2.0, 3.0, 15, "BOTH", 35, 0.0, 1.5, 30, null);
+        TowerConfig invalidSlow = new TowerConfig("BadSlow", "MVP", 50, 2.0, 3.0, 15, TargetType.BOTH, 35, 0.0, 1.5, 30, null);
         assertThrows(InvalidConfigException.class, () -> loader.validateTowers(Map.of("BadSlow", invalidSlow)));
 
-        TowerConfig invalidSlowTicks = new TowerConfig("BadSlowTicks", "MVP", 50, 2.0, 3.0, 15, "BOTH", 35, 0.0, 0.5, 0, null);
+        TowerConfig invalidSlowTicks = new TowerConfig("BadSlowTicks", "MVP", 50, 2.0, 3.0, 15, TargetType.BOTH, 35, 0.0, 0.5, 0, null);
         assertThrows(InvalidConfigException.class, () -> loader.validateTowers(Map.of("BadSlowTicks", invalidSlowTicks)));
     }
 
@@ -312,7 +313,7 @@ class ConfigLoaderTest {
     @DisplayName("Validation fails when level references an unknown tower type")
     void testUnknownTowerTypeReferencedInLevel() {
         Map<String, TowerConfig> towers = Map.of(
-                "Cannon", new TowerConfig("Cannon", 60, 2.5, 12.0, 12)
+                "Cannon", TestConfigHelper.getFrozenTowerConfig("Cannon")
         );
         Map<String, EnemyConfig> enemies = Map.of(
                 "Basic", new EnemyConfig("Basic", 40.0, 0.05, 8, 1)
@@ -334,7 +335,7 @@ class ConfigLoaderTest {
     @DisplayName("Validation fails when wave spawn group references an unknown enemy type")
     void testUnknownEnemyTypeReferencedInWave() {
         Map<String, TowerConfig> towers = Map.of(
-                "Cannon", new TowerConfig("Cannon", 60, 2.5, 12.0, 12)
+                "Cannon", TestConfigHelper.getFrozenTowerConfig("Cannon")
         );
         Map<String, EnemyConfig> enemies = Map.of(
                 "Basic", new EnemyConfig("Basic", 40.0, 0.05, 8, 1)
@@ -537,5 +538,30 @@ class ConfigLoaderTest {
         Files.writeString(jitterFile, missingJitterJson);
         InvalidConfigException exJitter = assertThrows(InvalidConfigException.class, () -> loader.loadLevel(jitterFile));
         assertTrue(exJitter.getMessage().contains("spawnJitterTicks"));
+    }
+
+    @Test
+    @DisplayName("Loads and validates the real src/main/resources configuration without asserting specific numbers")
+    void testRealMainResourcesLoadAndValidate() {
+        Path mainResources = Files.isDirectory(Path.of("src", "main", "resources"))
+                ? Path.of("src", "main", "resources")
+                : Path.of("engine", "src", "main", "resources");
+        GameConfig dirConfig = loader.loadFromDirectory(mainResources);
+        assertNotNull(dirConfig, "Directory GameConfig must not be null");
+        assertNotNull(dirConfig.towers(), "Towers must not be null");
+        assertNotNull(dirConfig.enemies(), "Enemies must not be null");
+        assertNotNull(dirConfig.level(), "Level must not be null");
+        assertFalse(dirConfig.towers().isEmpty(), "Towers must not be empty");
+        assertFalse(dirConfig.enemies().isEmpty(), "Enemies must not be empty");
+        assertNotNull(dirConfig.level().name(), "Level name must not be null");
+
+        GameConfig classpathConfig = loader.loadFromClasspath("");
+        assertNotNull(classpathConfig, "Classpath GameConfig must not be null");
+        assertNotNull(classpathConfig.towers(), "Towers must not be null");
+        assertNotNull(classpathConfig.enemies(), "Enemies must not be null");
+        assertNotNull(classpathConfig.level(), "Level must not be null");
+        assertFalse(classpathConfig.towers().isEmpty(), "Towers must not be empty");
+        assertFalse(classpathConfig.enemies().isEmpty(), "Enemies must not be empty");
+        assertNotNull(classpathConfig.level().name(), "Level name must not be null");
     }
 }

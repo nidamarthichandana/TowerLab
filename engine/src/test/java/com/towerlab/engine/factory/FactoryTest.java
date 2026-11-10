@@ -1,28 +1,36 @@
 package com.towerlab.engine.factory;
 
 import com.towerlab.engine.config.EnemyConfig;
+import com.towerlab.engine.config.TargetType;
 import com.towerlab.engine.config.TowerConfig;
 import com.towerlab.engine.exception.InvalidConfigException;
 import com.towerlab.engine.model.ArmoredEnemy;
+import com.towerlab.engine.model.AttackResult;
 import com.towerlab.engine.model.BasicEnemy;
 import com.towerlab.engine.model.CannonTower;
 import com.towerlab.engine.model.Enemy;
 import com.towerlab.engine.model.FastEnemy;
 import com.towerlab.engine.model.FrostTower;
+import com.towerlab.engine.model.Path;
 import com.towerlab.engine.model.Position;
 import com.towerlab.engine.model.SniperTower;
 import com.towerlab.engine.model.Tower;
 import com.towerlab.engine.strategy.TargetingMode;
+import com.towerlab.engine.test.TestConfigHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.SplittableRandom;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FactoryTest {
 
@@ -31,19 +39,10 @@ class FactoryTest {
 
     @BeforeEach
     void setUp() {
-        Map<String, EnemyConfig> enemyConfigs = Map.of(
-                "Basic", new EnemyConfig("Basic", 40.0, 0.05, 8, 1),
-                "Fast", new EnemyConfig("Fast", "MVP", 25.0, 0.10, 0.0, 7, 1, 0.20),
-                "Armored", new EnemyConfig("Armored", "MVP", 120.0, 0.035, 0.40, 20, 2, 0.0)
-        );
-        enemyFactory = new EnemyFactory(enemyConfigs);
+        enemyFactory = new EnemyFactory(TestConfigHelper.getFrozenEnemies());
 
-        Map<String, TowerConfig> towerConfigs = Map.of(
-                "Cannon", new TowerConfig("Cannon", "MVP", 60, 2.5, 12.0, 12, "GROUND", 40, 1.0, 0.0, 0, null),
-                "Sniper", new TowerConfig("Sniper", "MVP", 90, 5.0, 40.0, 40, "BOTH", 60, 0.0, 0.0, 0, null),
-                "Frost", new TowerConfig("Frost", "MVP", 50, 2.0, 3.0, 15, "BOTH", 35, 0.0, 0.50, 30, null),
-                "Rapid", new TowerConfig("Rapid", "Stretch", 70, 2.0, 4.0, 3, "BOTH", 0, 0.0, 0.0, 0, null)
-        );
+        Map<String, TowerConfig> towerConfigs = new HashMap<>(TestConfigHelper.getFrozenTowers());
+        towerConfigs.put("Rapid", new TowerConfig("Rapid", "Stretch", 70, 2.0, 4.0, 3, TargetType.BOTH, 0, 0.0, 0.0, 0, null));
         towerFactory = new TowerFactory(towerConfigs);
     }
 
@@ -141,5 +140,67 @@ class FactoryTest {
                 towerFactory.create("Cannon", 1, null, TargetingMode.FIRST.strategy()));
         assertThrows(IllegalArgumentException.class, () ->
                 towerFactory.create("Cannon", 1, new Position(0, 0), null));
+    }
+
+    @Test
+    @DisplayName("Proves config drives behaviour: modified Basic enemy health and Cannon damage")
+    void testConfigDrivesBehaviour() {
+        // 1. Load a modified copy of enemy config with Basic health 80
+        EnemyConfig originalEnemy = TestConfigHelper.getFrozenEnemyConfig("Basic");
+        EnemyConfig modifiedEnemy = new EnemyConfig(
+                originalEnemy.type(),
+                originalEnemy.tier(),
+                80.0,
+                originalEnemy.speed(),
+                originalEnemy.armour(),
+                originalEnemy.reward(),
+                originalEnemy.baseDamage(),
+                originalEnemy.evasionChance()
+        );
+        EnemyFactory customEnemyFactory = new EnemyFactory(Map.of("Basic", modifiedEnemy));
+        Enemy basic = customEnemyFactory.create("Basic", 1);
+        assertEquals(80, basic.currentHealth());
+        assertEquals(80, basic.maxHealth());
+
+        // 2. Load a modified copy of tower config with Cannon damage 99.0
+        TowerConfig originalTower = TestConfigHelper.getFrozenTowerConfig("Cannon");
+        TowerConfig modifiedTower = new TowerConfig(
+                originalTower.type(),
+                originalTower.tier(),
+                originalTower.cost(),
+                originalTower.range(),
+                99.0,
+                originalTower.cooldown(),
+                originalTower.targets(),
+                originalTower.upgradeCost(),
+                originalTower.splashRadius(),
+                originalTower.slowFraction(),
+                originalTower.slowDurationTicks(),
+                originalTower.special()
+        );
+        TowerFactory customTowerFactory = new TowerFactory(Map.of("Cannon", modifiedTower));
+        Tower cannon = customTowerFactory.create("Cannon", 100, new Position(0, 0), TargetingMode.FIRST.strategy());
+        assertEquals(99.0, cannon.config().damage());
+
+        // Strengthened verification: Cannon with modified damage 99 attacks a Basic enemy with enough health
+        EnemyConfig tankyConfig = new EnemyConfig(
+                originalEnemy.type(),
+                originalEnemy.tier(),
+                200.0,
+                originalEnemy.speed(),
+                0.0,
+                originalEnemy.reward(),
+                originalEnemy.baseDamage(),
+                0.0
+        );
+        BasicEnemy target = new BasicEnemy(2, tankyConfig);
+        Path path = new Path(List.of(new Position(0, 0), new Position(10, 0)));
+        target.advance(path);
+
+        AttackResult result = cannon.update(List.of(target), path, new SplittableRandom(1));
+        assertTrue(result.fired());
+        assertEquals(1, result.hits().size());
+        assertEquals(99, result.hits().get(0).damageDealt(), "Attack damageDealt must be 99 from modified config");
+        assertEquals(101, target.currentHealth(), "Target health lost must be 99 (200 - 99 = 101)");
     }
 }

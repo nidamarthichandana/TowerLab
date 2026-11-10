@@ -1,0 +1,90 @@
+@startuml TowerLab_System_Architecture
+
+title TowerLab - Overall System Architecture
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam nodesep 45
+skinparam ranksep 50
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+
+left to right direction
+
+actor Player
+actor Developer
+
+package "Frontend Layer - React + Vite" {
+
+    component "Game Interface" as UI
+    component "Game Board" as Board
+    component "Configuration Panel" as Config
+    component "Analytics Dashboard" as Dashboard
+
+    UI --> Board
+    UI --> Config
+    UI --> Dashboard
+}
+
+package "Backend Layer - Spring Boot" {
+
+    component "Game Controller" as GC
+    component "Simulation Controller" as SC
+    component "Analytics Controller" as AC
+
+    component "Game Service" as GS
+    component "Simulation Service" as SS
+    component "Analytics Service" as AS
+
+    GC --> GS
+    SC --> SS
+    AC --> AS
+}
+
+package "Core Game Engine - Plain Java" {
+
+    component "Game Engine" as Engine
+    component "Game Session" as Session
+    component "Wave Manager" as Wave
+    component "Combat Resolver" as Combat
+
+    Engine --> Session
+    Engine --> Wave
+    Engine --> Combat
+}
+
+package "Simulation and Analytics" {
+
+    component "Simulation Engine" as Simulator
+    component "Simulation Runner" as Runner
+    component "Metrics Aggregator" as Aggregator
+    component "Balance Analyzer" as Analyzer
+
+    Simulator --> Runner
+    Simulator --> Aggregator
+    Aggregator --> Analyzer
+}
+
+database "MySQL Database" as DB
+
+Player --> UI : plays game
+Developer --> Config : configures game
+
+Board --> GC : REST API
+Config --> SC : REST API
+Dashboard --> AC : REST API
+
+GS --> Engine : controls gameplay
+SS --> Simulator : starts simulations
+AS --> Aggregator : requests metrics
+
+Runner --> Engine : reuses game engine
+
+GS --> DB : saves game data
+SS --> DB : saves simulation results
+AS --> DB : retrieves reports
+
+@enduml

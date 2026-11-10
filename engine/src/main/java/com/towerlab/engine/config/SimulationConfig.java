@@ -1,25 +1,37 @@
 package com.towerlab.engine.config;
 
+import com.towerlab.engine.simulation.PlayerAction;
+
+import java.util.List;
+import java.util.Objects;
+
 /**
- * Minimal configuration record for initializing game simulations.
+ * Immutable configuration record for executing a simulation run.
  *
- * @param initialLives the player's starting lives/health
- * @param initialGold  the player's starting gold/coins
- * @param totalWaves   the number of waves in the simulation
- * @param maxTicks     the maximum tick limit before timeout
- * @param randomSeed   seed used for reproducible simulation runs
+ * @param gameConfig the loaded game definitions (towers, enemies, level)
+ * @param seed       random seed used for reproducible simulation runs
+ * @param actions    immutable list of scheduled player actions across waves
  */
 public record SimulationConfig(
-        int initialLives,
-        int initialGold,
-        int totalWaves,
-        int maxTicks,
-        long randomSeed
+        GameConfig gameConfig,
+        long seed,
+        List<PlayerAction> actions
 ) {
-    /**
-     * Default constructor providing standard MVP baseline values.
-     */
-    public SimulationConfig() {
-        this(20, 150, 10, 20000, 1L);
+    public SimulationConfig {
+        Objects.requireNonNull(gameConfig, "gameConfig must not be null");
+        if (actions == null) {
+            actions = List.of();
+        } else {
+            actions = List.copyOf(actions);
+            for (PlayerAction action : actions) {
+                if (action == null) {
+                    throw new IllegalArgumentException("PlayerAction in actions list must not be null");
+                }
+            }
+        }
+    }
+
+    public SimulationConfig(GameConfig gameConfig, long seed) {
+        this(gameConfig, seed, List.of());
     }
 }

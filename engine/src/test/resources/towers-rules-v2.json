@@ -1,0 +1,58 @@
+[
+  {
+    "type": "Cannon",
+    "tier": "MVP",
+    "cost": 60,
+    "range": 2.5,
+    "damage": 12.0,
+    "cooldown": 12,
+    "targets": "GROUND",
+    "upgradeCost": 40,
+    "splashRadius": 1.0,
+    "slowFraction": 0.0,
+    "slowDurationTicks": 0,
+    "special": "Splash: enemies within 1.0 cells of the target take full damage"
+  },
+  {
+    "type": "Sniper",
+    "tier": "MVP",
+    "cost": 90,
+    "range": 5.0,
+    "damage": 40.0,
+    "cooldown": 40,
+    "targets": "BOTH",
+    "upgradeCost": 60,
+    "splashRadius": 0.0,
+    "slowFraction": 0.0,
+    "slowDurationTicks": 0,
+    "special": "High single-target damage with extended range"
+  },
+  {
+    "type": "Frost",
+    "tier": "MVP",
+    "cost": 50,
+    "range": 2.0,
+    "damage": 3.0,
+    "cooldown": 15,
+    "targets": "BOTH",
+    "upgradeCost": 35,
+    "splashRadius": 0.0,
+    "slowFraction": 0.50,
+    "slowDurationTicks": 30,
+    "special": "Slow 50% for 30 ticks"
+  },
+  {
+    "type": "Rapid",
+    "tier": "Stretch",
+    "cost": 70,
+    "range": 2.0,
+    "damage": 4.0,
+    "cooldown": 3,
+    "targets": "BOTH",
+    "upgradeCost": 50,
+    "splashRadius": 0.0,
+    "slowFraction": 0.0,
+    "slowDurationTicks": 0,
+    "special": "Very high attack speed against fast targets"
+  }
+]

@@ -1,5 +1,6 @@
 package com.towerlab.engine.model;
 
+import com.towerlab.engine.test.TestConfigHelper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -149,7 +150,7 @@ class PathTest {
     @DisplayName("Enemy cannot advance beyond path totalLength and hasReachedEnd stays true")
     void testEnemyAdvanceClampingAtEndpoint() {
         Path path = new Path(waypoints);
-        BasicEnemy basic = new BasicEnemy(1); // speed 0.05
+        BasicEnemy basic = TestConfigHelper.createBasicEnemy(1); // speed 0.05
 
         // Advance 400 ticks (400 * 0.05 = 20.0 > 18.0)
         for (int i = 0; i < 400; i++) {
