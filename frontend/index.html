@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TowerLab - Tower Defense Simulation & Balance Analytics</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Header & HUD -->
+    <header class="top-nav">
+      <div class="brand">
+        <span class="brand-logo">🛡️</span>
+        <span class="brand-title">Tower<span class="accent">Lab</span></span>
+        <span class="badge">SIM ENGINE v1.0</span>
+      </div>
+
+      <div class="header-controls">
+        <div class="control-group">
+          <label for="level-select">Map:</label>
+          <select id="level-select" class="dropdown"></select>
+        </div>
+
+        <div class="control-group">
+          <label for="seed-input">Seed:</label>
+          <input type="number" id="seed-input" value="133742" class="seed-field">
+          <button id="btn-random-seed" class="icon-btn" title="Randomize Seed">🎲</button>
+        </div>
+      </div>
+
+      <div class="hud-stats">
+        <div class="stat-pill health">
+          <span class="stat-icon">❤️</span>
+          <div class="stat-meta">
+            <span class="stat-label">BASE HEALTH</span>
+            <span id="hud-health" class="stat-val">100</span>
+          </div>
+        </div>
+
+        <div class="stat-pill gold">
+          <span class="stat-icon">🪙</span>
+          <div class="stat-meta">
+            <span class="stat-label">GOLD</span>
+            <span id="hud-gold" class="stat-val">350</span>
+          </div>
+        </div>
+
+        <div class="stat-pill wave">
+          <span class="stat-icon">🌊</span>
+          <div class="stat-meta">
+            <span class="stat-label">WAVE</span>
+            <span id="hud-wave" class="stat-val">1/3</span>
+          </div>
+        </div>
+
+        <div class="stat-pill tick">
+          <span class="stat-icon">⏱️</span>
+          <div class="stat-meta">
+            <span class="stat-label">TICK</span>
+            <span id="hud-tick" class="stat-val">0</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace Grid -->
+    <main class="main-workspace">
+      <!-- Left Panel: Tower Palette & Placement Tools -->
+      <aside class="sidebar-left">
+        <div class="panel-section">
+          <h3>TOWER DECK</h3>
+          <p class="section-desc">Select a tower archetype and place it on empty grid tiles.</p>
+
+          <div class="tower-palette">
+            <div class="tower-card selected" data-type="CANNON">
+              <div class="tower-card-header">
+                <span class="tower-icon">💣</span>
+                <span class="tower-name">Cannon</span>
+                <span class="tower-cost">🪙 100</span>
+              </div>
+              <div class="tower-stats-grid">
+                <span>Rng: <b>2.5</b></span>
+                <span>Dmg: <b>45</b></span>
+                <span>Rate: <b>1.0s</b></span>
+                <span>Type: <b>Physical</b></span>
+              </div>
+            </div>
+
+            <div class="tower-card" data-type="SNIPER">
+              <div class="tower-card-header">
+                <span class="tower-icon">🎯</span>
+                <span class="tower-name">Sniper</span>
+                <span class="tower-cost">🪙 150</span>
+              </div>
+              <div class="tower-stats-grid">
+                <span>Rng: <b>6.0</b></span>
+                <span>Dmg: <b>140</b></span>
+                <span>Rate: <b>2.5s</b></span>
+                <span>Type: <b>Burst</b></span>
+              </div>
+            </div>
+
+            <div class="tower-card" data-type="FROST">
+              <div class="tower-card-header">
+                <span class="tower-icon">❄️</span>
+                <span class="tower-name">Frost</span>
+                <span class="tower-cost">🪙 125</span>
+              </div>
+              <div class="tower-stats-grid">
+                <span>Rng: <b>2.0</b></span>
+                <span>Dmg: <b>15</b></span>
+                <span>Rate: <b>1.5s</b></span>
+                <span>Slow: <b>40%</b></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>TARGETING POLICY</h3>
+          <div class="targeting-buttons">
+            <button class="target-btn active" data-mode="FIRST">FIRST</button>
+            <button class="target-btn" data-mode="LAST">LAST</button>
+            <button class="target-btn" data-mode="STRONGEST">STRONGEST</button>
+            <button class="target-btn" data-mode="CLOSEST">CLOSEST</button>
+          </div>
+        </div>
+
+        <div class="panel-section plan-actions">
+          <button id="btn-simulate" class="primary-btn pulse">
+            <span>▶</span> Run Simulation
+          </button>
+          <button id="btn-batch-modal" class="secondary-btn">
+            <span>📊</span> Balance Analytics
+          </button>
+          <button id="btn-clear-plan" class="danger-btn">
+            <span>🗑️</span> Clear Plan
+          </button>
+        </div>
+      </aside>
+
+      <!-- Center: Battle Arena Canvas / Grid -->
+      <section class="arena-section">
+        <div class="arena-header">
+          <div class="arena-title-row">
+            <h2 id="arena-level-title">The Serpentine Pass (12×8)</h2>
+            <div id="sim-outcome-badge" class="outcome-badge hidden">VICTORY</div>
+          </div>
+          <span id="arena-level-desc" class="arena-desc">Path: (0,3) ➔ (11,6) • Place towers around chokepoints</span>
+        </div>
+
+        <div class="canvas-wrapper">
+          <canvas id="battleCanvas" width="960" height="640"></canvas>
+          <div id="grid-tooltip" class="grid-tooltip hidden"></div>
+        </div>
+
+        <!-- Replay Controls Bar -->
+        <div class="replay-bar">
+          <div class="playback-buttons">
+            <button id="btn-replay-play" class="control-btn" title="Play/Pause (Space)">▶</button>
+            <button id="btn-step-prev" class="control-btn" title="Step Back (←)">⏮</button>
+            <button id="btn-step-next" class="control-btn" title="Step Next (→)">⏭</button>
+            <button id="btn-replay-reset" class="control-btn" title="Reset to Start">↺</button>
+          </div>
+
+          <div class="scrubber-container">
+            <input type="range" id="timeline-scrubber" min="0" max="0" value="0" step="1">
+            <div class="scrubber-labels">
+              <span id="scrub-current">Tick: 0</span>
+              <span id="scrub-total">Total: 0</span>
+            </div>
+          </div>
+
+          <div class="speed-controls">
+            <button class="speed-btn" data-speed="0.5">0.5x</button>
+            <button class="speed-btn active" data-speed="1.0">1.0x</button>
+            <button class="speed-btn" data-speed="2.0">2.0x</button>
+            <button class="speed-btn" data-speed="5.0">5.0x</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Panel: Chronological Event Stream -->
+      <aside class="sidebar-right">
+        <div class="events-header">
+          <h3>EVENT LOG</h3>
+          <span id="event-count" class="badge">0 Events</span>
+        </div>
+
+        <div class="event-filter-tabs">
+          <button class="filter-tab active" data-filter="ALL">All</button>
+          <button class="filter-tab" data-filter="COMBAT">Combat</button>
+          <button class="filter-tab" data-filter="ECONOMY">Economy</button>
+          <button class="filter-tab" data-filter="WAVES">Waves</button>
+        </div>
+
+        <div id="events-stream" class="events-list">
+          <div class="empty-events">Place towers and click <b>Run Simulation</b> to generate the tick event log.</div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Balance Analytics Modal -->
+    <div id="analytics-modal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <div>
+            <h2>⚖️ Game Balance Analyzer</h2>
+            <p>Run Monte Carlo batch simulations over varying random seeds to evaluate strategy viability and tower utility.</p>
+          </div>
+          <button id="btn-close-modal" class="modal-close">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="batch-config-bar">
+            <div class="control-group">
+              <label>Sample Runs:</label>
+              <select id="batch-runs-select" class="dropdown">
+                <option value="10">10 Runs</option>
+                <option value="25">25 Runs</option>
+                <option value="50" selected>50 Runs</option>
+                <option value="100">100 Runs</option>
+              </select>
+            </div>
+            <button id="btn-run-batch" class="primary-btn">
+              <span>⚡</span> Execute Batch Analysis
+            </button>
+          </div>
+
+          <div id="analytics-results" class="analytics-results hidden">
+            <!-- Aggregate Metric Cards -->
+            <div class="metrics-summary-grid">
+              <div class="metric-card">
+                <span class="metric-label">WIN RATE</span>
+                <span id="metric-winrate" class="metric-val win">100%</span>
+                <span id="metric-winloss" class="metric-sub">50 Wins / 0 Losses</span>
+              </div>
+
+              <div class="metric-card">
+                <span class="metric-label">AVG BASE HEALTH</span>
+                <span id="metric-health" class="metric-val">84.2</span>
+                <span class="metric-sub">Out of 100 max</span>
+              </div>
+
+              <div class="metric-card">
+                <span class="metric-label">AVG TICKS SURVIVED</span>
+                <span id="metric-ticks" class="metric-val">680</span>
+                <span class="metric-sub">Ticks to clear</span>
+              </div>
+
+              <div class="metric-card">
+                <span class="metric-label">AVG GOLD REMAINING</span>
+                <span id="metric-gold" class="metric-val">620</span>
+                <span class="metric-sub">Surplus bounty</span>
+              </div>
+            </div>
+
+            <!-- Per Tower Analytics Table & Chart -->
+            <div class="tower-metrics-section">
+              <h3>PER-TOWER BALANCE TELEMETRY</h3>
+              <table class="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Tower</th>
+                    <th>Count</th>
+                    <th>Total Damage</th>
+                    <th>Damage Share</th>
+                    <th>Kills</th>
+                    <th>Kill Share</th>
+                    <th>Cost Efficiency (Dmg/Gold)</th>
+                    <th>Utilization</th>
+                  </tr>
+                </thead>
+                <tbody id="tower-metrics-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+
