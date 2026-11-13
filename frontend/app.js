@@ -69,9 +69,40 @@ const analyticsResults = document.getElementById('analytics-results');
 // Initialize
 window.addEventListener('DOMContentLoaded', async () => {
   setupEventListeners();
-  await loadLevels();
+  await Promise.all([loadLevels(), loadTowerConfigs()]);
   renderGrid();
 });
+
+async function loadTowerConfigs() {
+  try {
+    const res = await fetch(`${API_BASE}/tower-configs`);
+    if (!res.ok) return;
+    const configs = await res.json();
+    configs.forEach(cfg => {
+      if (TOWER_METADATA[cfg.towerType]) {
+        TOWER_METADATA[cfg.towerType].cost = cfg.cost;
+        TOWER_METADATA[cfg.towerType].range = cfg.attackRange;
+        TOWER_METADATA[cfg.towerType].baseDamage = cfg.baseDamage;
+        TOWER_METADATA[cfg.towerType].fireRateTicks = cfg.fireRateTicks;
+        TOWER_METADATA[cfg.towerType].slowFactor = cfg.slowFactor;
+      }
+    });
+    updateTowerDeckUI();
+  } catch (err) {
+    console.error('Failed to load tower configs from backend:', err);
+  }
+}
+
+function updateTowerDeckUI() {
+  document.querySelectorAll('.tower-card').forEach(card => {
+    const type = card.dataset.type;
+    const meta = TOWER_METADATA[type];
+    if (meta) {
+      const costEl = card.querySelector('.tower-cost');
+      if (costEl) costEl.textContent = `🪙 ${meta.cost}`;
+    }
+  });
+}
 
 function setupEventListeners() {
   // Tower selection

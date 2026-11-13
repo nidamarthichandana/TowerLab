@@ -205,6 +205,7 @@ public class GameSimulation {
                                 target.applySlow(tower.getType().getSlowFactor(), tower.getType().getSlowDurationTicks());
                                 events.add(SimulationEvent.builder(currentTick, EventType.CREEP_SLOWED)
                                         .creepId(target.getId())
+                                        .creepPosition(target.getX(), target.getY())
                                         .slow(tower.getType().getSlowFactor(), tower.getType().getSlowDurationTicks())
                                         .build());
                             }
@@ -214,11 +215,13 @@ public class GameSimulation {
                             events.add(SimulationEvent.builder(currentTick, EventType.TOWER_FIRED)
                                     .towerId(tower.getId())
                                     .creepId(target.getId())
+                                    .creepPosition(target.getX(), target.getY())
                                     .damage(damage)
                                     .build());
 
                             events.add(SimulationEvent.builder(currentTick, EventType.CREEP_DAMAGED)
                                     .creepId(target.getId())
+                                    .creepPosition(target.getX(), target.getY())
                                     .combat(damage, target.getCurrentHealth())
                                     .build());
 
@@ -231,6 +234,7 @@ public class GameSimulation {
 
                                 events.add(SimulationEvent.builder(currentTick, EventType.CREEP_KILLED)
                                         .creepId(target.getId())
+                                        .creepPosition(target.getX(), target.getY())
                                         .bounty(bounty, gold)
                                         .build());
                             }

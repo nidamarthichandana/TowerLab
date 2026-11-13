@@ -9,6 +9,11 @@ spring:
   jackson:
     serialization:
       write-dates-as-timestamps: false
+  sql:
+    init:
+      mode: always
+  jpa:
+    defer-datasource-initialization: true
 
 ---
 # Development Profile (Default H2 In-Memory with Web Console)
@@ -30,9 +35,6 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
-    properties:
-      hibernate:
-        format_sql: true
 
 ---
 # Production / PostgreSQL Profile
@@ -50,4 +52,3 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
-

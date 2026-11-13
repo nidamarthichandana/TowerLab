@@ -88,6 +88,12 @@ public class SimulationEvent {
             return this;
         }
 
+        public Builder creepPosition(double x, double y) {
+            event.creepX = x;
+            event.creepY = y;
+            return this;
+        }
+
         public Builder combat(int damage, double remainingHealth) {
             event.damage = damage;
             event.remainingHealth = remainingHealth;
