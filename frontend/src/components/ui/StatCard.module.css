@@ -1,0 +1,142 @@
+/* ── StatCard ── */
+.card {
+  position: relative;
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--gradient-card);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  transition: all var(--transition-normal);
+  animation: fadeIn 0.4s ease-out both;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  opacity: 0.9;
+  transition: opacity var(--transition-fast);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-border-accent);
+}
+
+/* ── Color variants ── */
+.blue::before { background: linear-gradient(90deg, var(--color-accent-blue), var(--color-accent-cyan)); }
+.blue:hover   { box-shadow: 0 8px 32px rgba(45,142,245,0.15), var(--glow-blue-sm); }
+.blue .iconWrap { background: rgba(45,142,245,0.12); color: var(--color-accent-blue); }
+
+.purple::before { background: linear-gradient(90deg, var(--color-accent-purple), #9f61ff); }
+.purple:hover   { box-shadow: 0 8px 32px rgba(124,58,237,0.15), var(--glow-purple); }
+.purple .iconWrap { background: rgba(124,58,237,0.12); color: var(--color-accent-purple); }
+
+.green::before { background: linear-gradient(90deg, var(--color-accent-green), #34d399); }
+.green:hover   { box-shadow: 0 8px 32px rgba(16,185,129,0.15), var(--glow-green); }
+.green .iconWrap { background: rgba(16,185,129,0.12); color: var(--color-accent-green); }
+
+.amber::before { background: linear-gradient(90deg, var(--color-accent-amber), #fcd34d); }
+.amber:hover   { box-shadow: 0 8px 32px rgba(245,158,11,0.15), var(--glow-amber); }
+.amber .iconWrap { background: rgba(245,158,11,0.12); color: var(--color-accent-amber); }
+
+.cyan::before { background: linear-gradient(90deg, var(--color-accent-cyan), #67e8f9); }
+.cyan:hover   { box-shadow: 0 8px 32px rgba(0,212,255,0.15), var(--glow-cyan); }
+.cyan .iconWrap { background: rgba(0,212,255,0.12); color: var(--color-accent-cyan); }
+
+/* ── Top row ── */
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.iconWrap {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-normal);
+}
+
+.card:hover .iconWrap {
+  transform: scale(1.05);
+}
+
+/* ── Trend badge ── */
+.trend {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+}
+
+.trendUp {
+  color: var(--color-accent-green);
+  background: rgba(16,185,129,0.1);
+  border: 1px solid rgba(16,185,129,0.2);
+}
+
+.trendDown {
+  color: var(--color-accent-red);
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.2);
+}
+
+/* ── Value ── */
+.value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  line-height: 1;
+  margin-bottom: var(--space-1);
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.suffix {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-left: 2px;
+}
+
+/* ── Label ── */
+.label {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.trendLabel {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+  font-family: var(--font-mono);
+}
+
+/* ── Shimmer overlay for future loading state ── */
+.card.loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.03) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}

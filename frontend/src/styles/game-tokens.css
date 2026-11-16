@@ -1,0 +1,125 @@
+/* ═══════════════════════════════════════════════════════
+   TOWERLAB — AAA GAME DESIGN TOKENS
+   Royal Emerald & Sapphire palette
+   ═══════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Core Palette ── */
+  --g-midnight:      #081522;
+  --g-midnight-deep: #04090f;
+  --g-sapphire:      #163B63;
+  --g-sapphire-dark: #0d2540;
+  --g-emerald:       #07513F;
+  --g-emerald-dark:  #043d2f;
+  --g-jade:          #159875;
+  --g-jade-light:    #1dbf92;
+  --g-gold:          #D6B56D;
+  --g-gold-bright:   #F0D080;
+  --g-gold-dim:      #9a7d44;
+  --g-ivory:         #E8E5D8;
+  --g-ivory-dim:     rgba(232, 229, 216, 0.55);
+  --g-mist:          rgba(232, 229, 216, 0.06);
+  --g-shadow:        rgba(0, 0, 0, 0.85);
+
+  /* ── Typography ── */
+  --g-font-title: 'Orbitron', 'Inter', sans-serif;
+  --g-font-body:  'Inter', sans-serif;
+  --g-font-mono:  'JetBrains Mono', monospace;
+
+  /* ── Glow effects ── */
+  --g-glow-gold:    0 0 20px rgba(214, 181, 109, 0.6), 0 0 60px rgba(214, 181, 109, 0.2);
+  --g-glow-jade:    0 0 20px rgba(21, 152, 117, 0.6), 0 0 60px rgba(21, 152, 117, 0.2);
+  --g-glow-sapphire:0 0 20px rgba(22, 59, 99, 0.8),   0 0 80px rgba(22, 59, 99, 0.4);
+  --g-glow-white:   0 0 30px rgba(232, 229, 216, 0.3);
+
+  /* ── Transitions ── */
+  --g-ease-game: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --g-ease-cin:  cubic-bezier(0.4, 0, 0.2, 1);
+  --g-t-fast:  0.15s var(--g-ease-game);
+  --g-t-med:   0.35s var(--g-ease-game);
+  --g-t-slow:  0.65s var(--g-ease-cin);
+  --g-t-epic:  1.2s  var(--g-ease-cin);
+}
+
+/* ── Game keyframes ── */
+@keyframes gCinematicFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes gSlideUp {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gRevealTitle {
+  0%   { opacity: 0; transform: translateY(20px) scale(0.96); filter: blur(12px); }
+  60%  { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+@keyframes gProgressFill {
+  from { width: 0%; }
+  to   { width: var(--progress, 100%); }
+}
+
+@keyframes gMistDrift {
+  0%   { transform: translateX(0) scaleY(1); opacity: 0.4; }
+  50%  { transform: translateX(-3%) scaleY(1.05); opacity: 0.6; }
+  100% { transform: translateX(0) scaleY(1); opacity: 0.4; }
+}
+
+@keyframes gMistDrift2 {
+  0%   { transform: translateX(0); opacity: 0.3; }
+  50%  { transform: translateX(4%); opacity: 0.5; }
+  100% { transform: translateX(0); opacity: 0.3; }
+}
+
+@keyframes gGoldPulse {
+  0%, 100% { text-shadow: 0 0 10px rgba(214,181,109,0.4), 0 0 30px rgba(214,181,109,0.1); }
+  50%       { text-shadow: 0 0 20px rgba(214,181,109,0.8), 0 0 60px rgba(214,181,109,0.3); }
+}
+
+@keyframes gMenuItemReveal {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes gFlicker {
+  0%, 95%, 100% { opacity: 1; }
+  96%           { opacity: 0.4; }
+  97%           { opacity: 0.9; }
+  98%           { opacity: 0.3; }
+}
+
+@keyframes gVignetteBreath {
+  0%, 100% { opacity: 0.65; }
+  50%      { opacity: 0.8; }
+}
+
+@keyframes gFloatParticle {
+  0%   { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 0.6; }
+  100% { transform: translateY(-120px) translateX(var(--drift, 20px)) scale(0.4); opacity: 0; }
+}
+
+@keyframes gScanline {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes gHudSlideIn {
+  from { opacity: 0; transform: translateY(-100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gSideNavSlideIn {
+  from { opacity: 0; transform: translateX(-100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes gContentFadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

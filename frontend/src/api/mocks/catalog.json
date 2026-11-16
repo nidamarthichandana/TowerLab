@@ -1,0 +1,60 @@
+{
+  "towers": [
+    {
+      "type": "Cannon",
+      "cost": 60,
+      "range": 2.5,
+      "damage": 12,
+      "cooldown": 12,
+      "targets": "ground",
+      "special": "splash radius 1.0",
+      "upgradeCost": null
+    },
+    {
+      "type": "Sniper",
+      "cost": 90,
+      "range": 5,
+      "damage": 40,
+      "cooldown": 40,
+      "targets": "all",
+      "special": null,
+      "upgradeCost": null
+    },
+    {
+      "type": "Frost",
+      "cost": 50,
+      "range": 2,
+      "damage": 3,
+      "cooldown": 15,
+      "targets": "ground",
+      "special": "slows 50% for 30 ticks",
+      "upgradeCost": null
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Basic",
+      "health": 40,
+      "speed": 0.05,
+      "armour": 0,
+      "reward": 8,
+      "baseDamage": 1
+    },
+    {
+      "type": "Fast",
+      "health": 25,
+      "speed": 0.10,
+      "armour": 0,
+      "reward": 7,
+      "baseDamage": 1
+    },
+    {
+      "type": "Armored",
+      "health": 120,
+      "speed": 0.035,
+      "armour": 0.4,
+      "reward": 20,
+      "baseDamage": 2
+    }
+  ]
+}

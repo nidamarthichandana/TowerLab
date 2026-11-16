@@ -1,0 +1,32 @@
+{
+  "runs": 200,
+  "winRate": 1.0,
+  "averages": {
+    "damageDealt": 3164.0,
+    "enemiesDefeated": 60.3,
+    "leakage": 8.7,
+    "baseHealthRemaining": 7.9,
+    "durationTicks": 2366.8
+  },
+  "towerStats": [
+    {
+      "towerType": "Cannon",
+      "damageContribution": 0.736,
+      "costEfficiency": 38.83,
+      "utilization": 0.496
+    },
+    {
+      "towerType": "Frost",
+      "damageContribution": 0.063,
+      "costEfficiency": 4.01,
+      "utilization": 0.533
+    },
+    {
+      "towerType": "Sniper",
+      "damageContribution": 0.200,
+      "costEfficiency": 7.04,
+      "utilization": 0.692
+    }
+  ],
+  "findings": []
+}

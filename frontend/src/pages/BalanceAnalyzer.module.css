@@ -1,0 +1,381 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  overflow-y: auto;
+  height: 100%;
+}
+
+/* ── Page header ──────────────────────────────────────────────────────────── */
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.titleGroup { display: flex; flex-direction: column; gap: 4px; }
+
+.title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.titleIcon { color: var(--color-accent-purple); }
+
+.subtitle { font-size: 0.8rem; color: var(--color-text-secondary); }
+
+.pills { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+/* ── Top row: config + findings ───────────────────────────────────────────── */
+.topRow {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 900px) { .topRow { grid-template-columns: 1fr; } }
+
+/* ── Sim config card ─────────────────────────────────────────────────────── */
+.simConfig { display: flex; flex-direction: column; gap: 12px; }
+
+.simField { display: flex; flex-direction: column; gap: 4px; }
+
+.label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+}
+
+.select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+  font-size: 0.82rem;
+  outline: none;
+  transition: border 0.15s;
+}
+
+.select:focus { border-color: var(--color-accent-purple); }
+
+.rangeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slider {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 4px;
+  background: var(--color-bg-tertiary);
+  border-radius: 2px;
+  outline: none;
+  accent-color: var(--color-accent-purple);
+  cursor: pointer;
+}
+
+.rangeVal {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  min-width: 36px;
+  text-align: right;
+  font-family: monospace;
+}
+
+/* Loadout builder */
+.loadoutTitle {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
+}
+
+.loadoutRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.loadoutItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+}
+
+.loadoutCheck {
+  accent-color: var(--color-accent-purple);
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+.loadoutLabel {
+  font-size: 0.8rem;
+  color: var(--color-text-primary);
+  flex: 1;
+}
+
+.loadoutCost {
+  font-size: 0.72rem;
+  color: var(--color-accent-amber);
+  font-weight: 600;
+}
+
+/* Progress bar */
+.simProgress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-bg-tertiary);
+  overflow: hidden;
+}
+
+.simProgressBar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-accent-purple), var(--color-accent-cyan));
+  border-radius: 2px;
+}
+
+/* ── Findings ─────────────────────────────────────────────────────────────── */
+.findingsList { display: flex; flex-direction: column; gap: 8px; }
+
+.findingRow {
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: rgba(234,179,8,0.06);
+  border: 1px solid rgba(234,179,8,0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.findingRule {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-accent-amber);
+}
+
+.findingMetric {
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+  font-family: monospace;
+}
+
+.findingAction {
+  font-size: 0.75rem;
+  color: var(--color-text-primary);
+}
+
+.emptyFindings {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  text-align: center;
+  padding: 16px 0;
+}
+
+/* ── Results area ─────────────────────────────────────────────────────────── */
+.resultsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 800px) { .resultsRow { grid-template-columns: 1fr; } }
+
+/* Summary stats */
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.summaryCell {
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.summaryCellFull { grid-column: 1 / -1; }
+
+.summaryValue {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-family: monospace;
+}
+
+.summaryLabel {
+  font-size: 0.68rem;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Win-rate big pill */
+.winRatePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 1.5rem;
+  font-family: monospace;
+}
+
+.winRateHigh  { background: rgba(34,197,94,0.12); color: #22c55e; border: 1.5px solid rgba(34,197,94,0.3); }
+.winRateMed   { background: rgba(234,179,8,0.12);  color: #eab308; border: 1.5px solid rgba(234,179,8,0.3); }
+.winRateLow   { background: rgba(239,68,68,0.12);  color: #ef4444; border: 1.5px solid rgba(239,68,68,0.3); }
+
+/* Averages table */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.table th {
+  padding: 6px 8px;
+  text-align: left;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+  font-weight: 600;
+}
+
+.table td {
+  padding: 7px 8px;
+  border-bottom: 1px solid rgba(26,42,66,0.5);
+  color: var(--color-text-primary);
+  font-family: monospace;
+}
+
+.table tr:last-child td { border-bottom: none; }
+.table tr:hover td { background: rgba(255,255,255,0.02); }
+
+.tableWrap { overflow-x: auto; }
+
+/* Tower stats */
+.towerRow { transition: background 0.1s; }
+.towerRow:hover td { background: rgba(255,255,255,0.03); }
+
+.contribBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.barBg {
+  flex: 1;
+  height: 6px;
+  background: var(--color-bg-tertiary);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 60px;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.barLabel {
+  font-size: 0.72rem;
+  min-width: 36px;
+  text-align: right;
+  color: var(--color-text-secondary);
+}
+
+/* Help text */
+.helpText {
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  padding: 8px 10px;
+  background: rgba(59,130,246,0.05);
+  border: 1px solid rgba(59,130,246,0.15);
+  border-radius: 6px;
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+/* Charts row */
+.chartsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 800px) { .chartsRow { grid-template-columns: 1fr; } }
+
+/* Loading overlay */
+.loadingOverlay {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 120px;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-accent-purple);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Tooltip */
+.tooltip {
+  background: rgba(10,20,40,0.95);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 0.75rem;
+  color: var(--color-text-primary);
+}
+
+.tooltipLabel {
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--color-text-primary);
+}
+
+.tooltipRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--color-text-secondary);
+}
